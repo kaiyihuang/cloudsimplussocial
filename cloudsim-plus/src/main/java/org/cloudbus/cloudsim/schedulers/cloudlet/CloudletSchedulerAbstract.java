@@ -21,7 +21,7 @@ import org.cloudbus.cloudsim.schedulers.cloudlet.network.CloudletTaskScheduler;
 import org.cloudbus.cloudsim.util.Conversion;
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModel;
 import org.cloudbus.cloudsim.vms.Vm;
-import org.cloudbus.cloudsim.vms.VmSimple;
+import org.cloudbus.cloudsim.vms.VmSocial;
 import org.cloudsimplus.listeners.CloudletResourceAllocationFailEventInfo;
 import org.cloudsimplus.listeners.EventListener;
 
@@ -557,8 +557,8 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
      * so that the allocation can be updated when running Cloudlets are processed.
      */
     private void deallocateVmResources() {
-        ((VmSimple)vm).getRam().deallocateAllResources();
-        ((VmSimple)vm).getBw().deallocateAllResources();
+        ((VmSocial)vm).getRam().deallocateAllResources();
+        ((VmSocial)vm).getBw().deallocateAllResources();
     }
 
     /**
@@ -583,7 +583,7 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
             usedPes += cle.getCloudlet().getNumberOfPes();
         }
 
-        ((VmSimple) vm).setFreePesNumber(vm.getNumberOfPes() - usedPes);
+        ((VmSocial) vm).setFreePesNumber(vm.getNumberOfPes() - usedPes);
 
         return nextCloudletFinishTime;
     }
@@ -616,8 +616,8 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
     protected long updateCloudletProcessing(final CloudletExecution cle, final double currentTime) {
         final double partialFinishedInstructions = cloudletExecutedInstructionsForTimeSpan(cle, currentTime);
         cle.updateProcessing(partialFinishedInstructions);
-        updateVmResourceAbsoluteUtilization(cle, ((VmSimple)vm).getRam());
-        updateVmResourceAbsoluteUtilization(cle, ((VmSimple)vm).getBw());
+        updateVmResourceAbsoluteUtilization(cle, ((VmSocial)vm).getRam());
+        updateVmResourceAbsoluteUtilization(cle, ((VmSocial)vm).getBw());
 
         return (long)(partialFinishedInstructions/ Conversion.MILLION);
     }
@@ -796,7 +796,7 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
      */
     private double getVirtualMemoryDelay(final CloudletExecution cle, final double processingTimeSpan) {
         return getResourceOverSubscriptionDelay(
-            cle, processingTimeSpan, ((VmSimple)vm).getRam(),
+            cle, processingTimeSpan, ((VmSocial)vm).getRam(),
 
             /*
              * Since using VMem requires some portion of the RAM to be swapped between the disk
@@ -838,7 +838,7 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
      */
     private double getBandwidthOverSubscriptionDelay(final CloudletExecution cle, final double processingTimeSpan) {
         return getResourceOverSubscriptionDelay(
-            cle, processingTimeSpan, ((VmSimple)vm).getBw(),
+            cle, processingTimeSpan, ((VmSocial)vm).getBw(),
             (vmBw, requestedBw) -> requestedBw <= vmBw.getCapacity(),
 
             /* When some BW cannot be allocated to the Cloudlet (due to over-subscription),

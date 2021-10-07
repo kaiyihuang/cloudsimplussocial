@@ -9,6 +9,7 @@ package org.cloudbus.cloudsim.hosts;
 import org.cloudbus.cloudsim.core.*;
 import org.cloudbus.cloudsim.datacenters.Datacenter;
 import org.cloudbus.cloudsim.datacenters.DatacenterSimple;
+import org.cloudbus.cloudsim.datacenters.DatacenterSocial;
 import org.cloudbus.cloudsim.power.models.PowerModelHost;
 import org.cloudbus.cloudsim.provisioners.PeProvisioner;
 import org.cloudbus.cloudsim.provisioners.ResourceProvisioner;
@@ -44,7 +45,7 @@ import static java.util.stream.Collectors.toList;
  * @author Anton Beloglazov
  * @since CloudSim Toolkit 1.0
  */
-public class HostSimple implements Host {
+public class SocialHost implements Host {
     private static long defaultRamCapacity = (long) BytesConversion.gigaToMega(10);
     private static long defaultBwCapacity = 1000;
     private static long defaultStorageCapacity = (long) BytesConversion.gigaToMega(500);
@@ -174,7 +175,7 @@ public class HostSimple implements Host {
      * @see #setDefaultBwCapacity(long)
      * @see #setDefaultStorageCapacity(long)
      */
-    public HostSimple(final List<Pe> peList) {
+    public SocialHost(final List<Pe> peList) {
         this(peList, true);
     }
 
@@ -199,7 +200,7 @@ public class HostSimple implements Host {
      * @see #setDefaultBwCapacity(long)
      * @see #setDefaultStorageCapacity(long)
      */
-    public HostSimple(final List<Pe> peList, final boolean activate) {
+    public SocialHost(final List<Pe> peList, final boolean activate) {
         this(defaultRamCapacity, defaultBwCapacity, defaultStorageCapacity, peList, activate);
     }
 
@@ -213,7 +214,7 @@ public class HostSimple implements Host {
      *
      * @see #setVmScheduler(VmScheduler)
      */
-    public HostSimple(
+    public SocialHost(
         final ResourceProvisioner ramProvisioner,
         final ResourceProvisioner bwProvisioner,
         final long storage,
@@ -241,11 +242,11 @@ public class HostSimple implements Host {
      * @see #setBwProvisioner(ResourceProvisioner)
      * @see #setVmScheduler(VmScheduler)
      */
-    public HostSimple(final long ram, final long bw, final long storage, final List<Pe> peList) {
+    public SocialHost(final long ram, final long bw, final long storage, final List<Pe> peList) {
         this(ram, bw, new HarddriveStorage(storage), peList);
     }
 
-    public HostSimple(final long ram, final long bw, final HarddriveStorage storage, final List<Pe> peList) {
+    public SocialHost(final long ram, final long bw, final HarddriveStorage storage, final List<Pe> peList) {
         this(ram, bw, storage, peList, true);
     }
 
@@ -266,11 +267,11 @@ public class HostSimple implements Host {
      * @see #setBwProvisioner(ResourceProvisioner)
      * @see #setVmScheduler(VmScheduler)
      */
-    public HostSimple(final long ram, final long bw, final long storage, final List<Pe> peList, final boolean activate) {
+    public SocialHost(final long ram, final long bw, final long storage, final List<Pe> peList, final boolean activate) {
         this(ram, bw, new HarddriveStorage(storage), peList, activate);
     }
 
-    private HostSimple(final long ram, final long bw, final HarddriveStorage storage, final List<Pe> peList, final boolean activate) {
+    private SocialHost(final long ram, final long bw, final HarddriveStorage storage, final List<Pe> peList, final boolean activate) {
         this.setId(-1);
         this.setSimulation(Simulation.NULL);
         this.idleShutdownDeadline = DEF_IDLE_SHUTDOWN_DEADLINE;
@@ -579,7 +580,7 @@ public class HostSimple implements Host {
         }
 
         this.active = activate;
-        ((DatacenterSimple) datacenter).updateActiveHostsNumber(this);
+        ((DatacenterSocial) datacenter).updateActiveHostsNumber(this);
         activationChangeInProgress = false;
         notifyStartupOrShutdown(activate, wasActive);
     }
@@ -785,7 +786,7 @@ public class HostSimple implements Host {
     public final Host setRamProvisioner(final ResourceProvisioner ramProvisioner) {
         checkSimulationIsRunningAndAttemptedToChangeHost("RAM");
         this.ramProvisioner = requireNonNull(ramProvisioner);
-        this.ramProvisioner.setResources(ram, vm -> ((VmSimple)vm).getRam());
+        this.ramProvisioner.setResources(ram, vm -> ((VmSocial)vm).getRam());
         return this;
     }
 
@@ -804,7 +805,7 @@ public class HostSimple implements Host {
     public final Host setBwProvisioner(final ResourceProvisioner bwProvisioner) {
         checkSimulationIsRunningAndAttemptedToChangeHost("BW");
         this.bwProvisioner = requireNonNull(bwProvisioner);
-        this.bwProvisioner.setResources(bw, vm -> ((VmSimple)vm).getBw());
+        this.bwProvisioner.setResources(bw, vm -> ((VmSocial)vm).getBw());
         return this;
     }
 
@@ -1059,7 +1060,7 @@ public class HostSimple implements Host {
             return false;
         }
 
-        ((VmSimple)vm).updateMigrationStartListeners(this);
+        ((VmSocial)vm).updateMigrationStartListeners(this);
 
         updateProcessing(simulation.clock());
         vm.getHost().updateProcessing(simulation.clock());
@@ -1189,7 +1190,7 @@ public class HostSimple implements Host {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final HostSimple that = (HostSimple) o;
+        final SocialHost that = (SocialHost) o;
 
         if (id != that.id) return false;
         return simulation.equals(that.simulation);

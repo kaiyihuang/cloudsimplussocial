@@ -3,9 +3,15 @@ package org.cloudbus.cloudsim.brokers;
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.cloudlets.SocialCloudlet;
 import org.cloudbus.cloudsim.core.CloudSim;
+import org.cloudbus.cloudsim.hosts.HostSimple;
+import org.cloudbus.cloudsim.hosts.SocialHost;
+import org.cloudbus.cloudsim.user.User;
 import org.cloudbus.cloudsim.vms.Vm;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 
 /**
  * A implementation of {@link DatacenterBroker} that uses a Best Fit
@@ -17,14 +23,14 @@ import java.util.Comparator;
  * @author Humaira Abdul Salam
  * @since CloudSim Plus 4.3.8
  */
-public class DatacenterBrokerBestFit extends DatacenterBrokerSimple {
+public class DatacenterBrokerBestFitSocial extends DatacenterBrokerSimple {
 
     /**
      * Creates a DatacenterBroker object.
      *
      * @param simulation The CloudSim instance that represents the simulation the Entity is related to
      */
-    public DatacenterBrokerBestFit(final CloudSim simulation) {
+    public DatacenterBrokerBestFitSocial(final CloudSim simulation) {
         super(simulation);
     }
 
@@ -42,13 +48,41 @@ public class DatacenterBrokerBestFit extends DatacenterBrokerSimple {
             return cloudlet.getVm();
         }
 
+        ArrayList<Vm> temp_vm_list = new ArrayList<Vm>();
 
+        for(Vm vm_choice: getVmCreatedList())
+        {
+            HashMap<User, Integer> myadjacency_list = ((SocialCloudlet)cloudlet).owner.adjacency_map;
+            if( myadjacency_list.get( ((SocialHost)(vm_choice.getHost())).owner) == ((SocialCloudlet)cloudlet).securityLevel ) {
+                temp_vm_list.add(vm_choice);
+            }
+        }
+        for(Vm vm_choice: getVmCreatedList())
+        {
+            HashMap<User, Integer> myadjacency_list = ((SocialCloudlet)cloudlet).owner.adjacency_map;
+            if( myadjacency_list.get( ((SocialHost)(vm_choice.getHost())).owner) < ((SocialCloudlet)cloudlet).securityLevel && myadjacency_list.get( ((SocialHost)(vm_choice.getHost())).owner) != 0) {
+                temp_vm_list.add(vm_choice);
+            }
+        }
+        for(Vm vm_choice: getVmCreatedList())
+        {
+            HashMap<User, Integer> myadjacency_list = ((SocialCloudlet)cloudlet).owner.adjacency_map;
+            if( myadjacency_list.get( ((SocialHost)(vm_choice.getHost())).owner) == 0) {
+                temp_vm_list.add(vm_choice);
+            }
+        }
+        //Collections.reverse(temp_vm_list);
 
-        final Vm mappedVm = getVmCreatedList()
+        System.out.println(temp_vm_list);
+
+        final Vm mappedVm = temp_vm_list
             .stream()
             .filter(vm -> vm.getExpectedFreePesNumber() >= cloudlet.getNumberOfPes())
             .min(Comparator.comparingLong(Vm::getExpectedFreePesNumber))
             .orElse(Vm.NULL);
+
+
+        //System.out.println(mappedVm.getCloudletScheduler().getCloudletList());
 
         if (mappedVm == Vm.NULL) {
             LOGGER.warn("{}: {}: {} (PEs: {}) couldn't be mapped to any suitable VM.",

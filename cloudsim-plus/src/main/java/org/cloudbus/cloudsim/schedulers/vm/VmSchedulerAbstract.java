@@ -8,10 +8,12 @@ package org.cloudbus.cloudsim.schedulers.vm;
 
 import org.cloudbus.cloudsim.hosts.Host;
 import org.cloudbus.cloudsim.hosts.HostSimple;
+import org.cloudbus.cloudsim.hosts.SocialHost;
 import org.cloudbus.cloudsim.resources.Pe;
 import org.cloudbus.cloudsim.schedulers.MipsShare;
 import org.cloudbus.cloudsim.vms.Vm;
-import org.cloudbus.cloudsim.vms.VmSimple;
+import org.cloudbus.cloudsim.vms.VmSocial;
+import org.cloudbus.cloudsim.vms.VmSocial;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -94,7 +96,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
             host.removeVmMigratingOut(vm);
         }
 
-        ((VmSimple)vm).setRequestedMips(new MipsShare(requestedMips));
+        ((VmSocial)vm).setRequestedMips(new MipsShare(requestedMips));
         if(allocatePesForVmInternal(vm, requestedMips)) {
             updateStatusOfHostPesUsedByVm(vm, getHost().getFreePeList(), Pe.Status.BUSY);
             return true;
@@ -129,7 +131,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
         }
 
         final List<Pe> selectedPes = peList.stream().limit(vPesNumber).collect(toList());
-        ((HostSimple)host).setPeStatus(selectedPes, newStatus);
+        ((SocialHost)host).setPeStatus(selectedPes, newStatus);
     }
 
     protected abstract boolean allocatePesForVmInternal(Vm vm, MipsShare mipsShareRequested);
@@ -174,7 +176,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
 
     @Override
     public MipsShare getAllocatedMips(final Vm vm) {
-        final MipsShare mipsShare = ((VmSimple)vm).getAllocatedMips();
+        final MipsShare mipsShare = ((VmSocial)vm).getAllocatedMips();
 
         /*
         When a VM is migrating out of the source Host, its allocated MIPS
@@ -231,7 +233,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
 
     @Override
     public MipsShare getRequestedMips(final Vm vm) {
-        return ((VmSimple)vm).getRequestedMips();
+        return ((VmSocial)vm).getRequestedMips();
     }
 
     @Override
@@ -240,7 +242,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
             Stream.concat(host.getVmList().stream(), host.getVmsMigratingIn().stream());
         final double allocatedMips =
                 stream
-                    .map(vm -> (VmSimple)vm)
+                    .map(vm -> (VmSocial)vm)
                     .mapToDouble(this::actualVmTotalRequestedMips)
                     .sum();
 
@@ -261,7 +263,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
      * @return the actual requested MIPS sum across all VM PEs,
      * including the CPU overhead of the VM is in migration to this Host
      */
-    private double actualVmTotalRequestedMips(final VmSimple vm) {
+    private double actualVmTotalRequestedMips(final VmSocial vm) {
         final double totalVmRequestedMips = vm.getAllocatedMips().totalMips();
 
         /*If the VM is migrating in or out this Host,

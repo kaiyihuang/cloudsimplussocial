@@ -11,8 +11,10 @@ import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicy;
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyAbstract;
 import org.cloudbus.cloudsim.hosts.Host;
 import org.cloudbus.cloudsim.selectionpolicies.VmSelectionPolicy;
+import org.cloudbus.cloudsim.user.User;
 import org.cloudbus.cloudsim.vms.Vm;
 import org.cloudbus.cloudsim.vms.VmSimple;
+import org.cloudbus.cloudsim.vms.VmSocial;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -97,6 +99,20 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
         this.underUtilizationThreshold = DEF_UNDER_UTILIZATION_THRESHOLD;
         this.savedAllocation = new HashMap<>();
         setVmSelectionPolicy(vmSelectionPolicy);
+    }
+
+    public List<Host> socialVmGetViableHosts(VmSocial vm)
+    {
+       HashMap<User, Integer> temp = vm.owner.adjacency_map;
+       List<Host> answer = this.getHostList();
+       for (Host h: answer){
+            if(!temp.containsKey(h))
+                continue;
+            if(temp.get(h) > vm.securityLevel)
+                answer.remove(h);
+       }
+       return answer;
+
     }
 
     @Override
@@ -243,7 +259,7 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
      *         false otherwise
      */
     private boolean isNotHostOverloadedAfterAllocation(final Host host, final Vm vm) {
-        final Vm tempVm = new VmSimple(vm);
+        final Vm tempVm = new VmSocial(vm);
 
         if (!host.createTemporaryVm(tempVm).fully()) {
             return false;
@@ -339,11 +355,19 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
      * @see #findHostForVmInternal(Vm, Stream)
      */
     private Optional<Host> findHostForVm(final Vm vm, final Set<? extends Host> excludedHosts, final Predicate<Host> predicate) {
-        final Stream<Host> stream = this.getHostList().stream()
+        Stream<Host> stream = this.getHostList().stream()
             .filter(host -> !excludedHosts.contains(host))
             .filter(host -> host.isSuitableForVm(vm))
             .filter(host -> isNotHostOverloadedAfterAllocation(host, vm))
             .filter(predicate);
+
+        /*
+        if (vm instanceof VmSocial)
+        {
+            if( ((VmSocial)vm).owner != null )
+                stream = stream.filter(host->this.socialVmGetViableHosts((VmSocial)vm).contains(host));
+        }*/
+
 
         return findHostForVmInternal(vm, stream);
     }

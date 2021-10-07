@@ -20,6 +20,7 @@ import org.cloudbus.cloudsim.resources.Pe.Status;
 import org.cloudbus.cloudsim.resources.Ram;
 import org.cloudbus.cloudsim.resources.ResourceManageable;
 import org.cloudbus.cloudsim.schedulers.vm.VmScheduler;
+import org.cloudbus.cloudsim.user.User;
 import org.cloudbus.cloudsim.vms.HostResourceStats;
 import org.cloudbus.cloudsim.vms.Vm;
 import org.cloudsimplus.listeners.EventListener;

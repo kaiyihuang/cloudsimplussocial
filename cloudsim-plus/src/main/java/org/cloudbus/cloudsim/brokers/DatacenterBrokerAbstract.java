@@ -9,6 +9,7 @@ package org.cloudbus.cloudsim.brokers;
 
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.cloudlets.CloudletSimple;
+import org.cloudbus.cloudsim.cloudlets.SocialCloudlet;
 import org.cloudbus.cloudsim.core.*;
 import org.cloudbus.cloudsim.core.events.CloudSimEvent;
 import org.cloudbus.cloudsim.core.events.SimEvent;
@@ -18,7 +19,8 @@ import org.cloudbus.cloudsim.schedulers.cloudlet.CloudletScheduler;
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModel;
 import org.cloudbus.cloudsim.vms.Vm;
 import org.cloudbus.cloudsim.vms.VmGroup;
-import org.cloudbus.cloudsim.vms.VmSimple;
+import org.cloudbus.cloudsim.vms.VmSocial;
+import org.cloudbus.cloudsim.vms.VmSocial;
 import org.cloudsimplus.autoscaling.VerticalVmScaling;
 import org.cloudsimplus.listeners.DatacenterBrokerEventInfo;
 import org.cloudsimplus.listeners.EventInfo;
@@ -448,6 +450,8 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
         }
 
         cloudlet.setVm(vm);
+        if(cloudlet instanceof SocialCloudlet)
+            ((VmSocial)vm).owner = ((SocialCloudlet) cloudlet).owner;
         return true;
     }
 
@@ -795,7 +799,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
     private void processCloudletReturn(final SimEvent evt) {
         final Cloudlet cloudlet = (Cloudlet) evt.getData();
         cloudletsFinishedList.add(cloudlet);
-        ((VmSimple) cloudlet.getVm()).addExpectedFreePesNumber(cloudlet.getNumberOfPes());
+        ((VmSocial) cloudlet.getVm()).addExpectedFreePesNumber(cloudlet.getNumberOfPes());
         LOGGER.info("{}: {}: {} finished in {} and returned to broker.", getSimulation().clockStr(), getName(), cloudlet, cloudlet.getVm());
 
         if (cloudlet.getVm().getCloudletScheduler().isEmpty()) {
@@ -842,7 +846,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
                 sendNow(getDatacenter(vm), CloudSimTags.VM_DESTROY, vm);
             }
 
-            if(isVmIdlenessVerificationRequired((VmSimple)vm)) {
+            if(isVmIdlenessVerificationRequired((VmSocial)vm)) {
                 getSimulation().send(
                     new CloudSimEvent(vmDestructionDelayFunction.apply(vm),
                         vm.getHost().getDatacenter(),
@@ -903,7 +907,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
      * @param vm the Vm to check
      * @return true if a message to check VM idleness has to be sent, false otherwise
      */
-    private boolean isVmIdlenessVerificationRequired(final VmSimple vm) {
+    private boolean isVmIdlenessVerificationRequired(final VmSocial vm) {
         if(vm.hasStartedSomeCloudlet() && vm.getCloudletScheduler().isEmpty()){
             final int schedulingInterval = (int)vm.getHost().getDatacenter().getSchedulingInterval();
             final int delay = vmDestructionDelayFunction.apply(vm).intValue();
@@ -993,7 +997,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
                 continue;
             }
 
-            ((VmSimple) lastSelectedVm).removeExpectedFreePesNumber(cloudlet.getNumberOfPes());
+            ((VmSocial) lastSelectedVm).removeExpectedFreePesNumber(cloudlet.getNumberOfPes());
 
             logCloudletCreationRequest(cloudlet);
             cloudlet.setVm(lastSelectedVm);

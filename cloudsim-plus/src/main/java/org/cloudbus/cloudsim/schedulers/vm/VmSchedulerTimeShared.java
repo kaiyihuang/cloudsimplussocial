@@ -9,7 +9,8 @@ package org.cloudbus.cloudsim.schedulers.vm;
 import org.cloudbus.cloudsim.resources.Pe;
 import org.cloudbus.cloudsim.schedulers.MipsShare;
 import org.cloudbus.cloudsim.vms.Vm;
-import org.cloudbus.cloudsim.vms.VmSimple;
+import org.cloudbus.cloudsim.vms.VmSocial;
+import org.cloudbus.cloudsim.vms.VmSocial;
 
 import java.util.Iterator;
 
@@ -107,7 +108,7 @@ public class VmSchedulerTimeShared extends VmSchedulerAbstract {
      */
     protected void allocateMipsShareForVm(final Vm vm, final MipsShare requestedMipsReduced) {
         final MipsShare mipsShare = getMipsShareToAllocate(vm, requestedMipsReduced);
-        ((VmSimple)vm).setAllocatedMips(mipsShare);
+        ((VmSocial)vm).setAllocatedMips(mipsShare);
     }
 
     /**
@@ -298,7 +299,7 @@ public class VmSchedulerTimeShared extends VmSchedulerAbstract {
     @Override
     protected long deallocatePesFromVmInternal(final Vm vm, final int pesToRemove) {
         return Math.max(
-            removePesFromVm(vm, ((VmSimple)vm).getRequestedMips(), pesToRemove),
-            removePesFromVm(vm, ((VmSimple)vm).getAllocatedMips(), pesToRemove));
+            removePesFromVm(vm, ((VmSocial)vm).getRequestedMips(), pesToRemove),
+            removePesFromVm(vm, ((VmSocial)vm).getAllocatedMips(), pesToRemove));
     }
 }
