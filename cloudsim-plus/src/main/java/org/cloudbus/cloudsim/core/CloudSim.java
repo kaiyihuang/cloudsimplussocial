@@ -26,8 +26,9 @@ import static java.util.Objects.requireNonNull;
 import static org.cloudbus.cloudsim.util.TimeUtil.secondsToStr;
 
 /**
- * The main class of the simulation API, that manages Cloud Computing simulations providing all methods to
- * start, pause and stop them. It sends and processes all discrete events during the simulation time.
+ * The main class of the simulation API, that manages Cloud Computing simulations,
+ * providing all methods to start, pause and stop them.
+ * It sends and processes all discrete events during the simulation time.
  *
  * @author Rodrigo N. Calheiros
  * @author Anton Beloglazov
@@ -38,15 +39,13 @@ public class CloudSim implements Simulation {
     /**
      * CloudSim Plus current version.
      */
-    public static final String VERSION = "CloudSim Plus 6.5.2";
+    public static final String VERSION = "CloudSim Plus 7.0.4";
 
     public static final Logger LOGGER = LoggerFactory.getLogger(CloudSim.class.getSimpleName());
 
     private final CircularTimeQueue clockQueue;
 
-    /**
-     * @see #getNetworkTopology()
-     */
+    /** @see #getNetworkTopology() */
     private NetworkTopology networkTopology;
 
     /**
@@ -76,14 +75,10 @@ public class CloudSim implements Simulation {
      */
     private double newTerminationTime = -1;
 
-    /**
-     * @see #getMinTimeBetweenEvents()
-     */
+    /** @see #getMinTimeBetweenEvents() */
     private final double minTimeBetweenEvents;
 
-    /**
-     * @see #getEntityList()
-     */
+    /** @see #getEntityList() */
     private final List<CloudSimEntity> entities;
 
     /**
@@ -96,14 +91,10 @@ public class CloudSim implements Simulation {
      */
     private final DeferredQueue deferred;
 
-    /**
-     * @see #clock()
-     */
+    /** @see #clock() */
     private double clock;
 
-    /**
-     * @see #isRunning()
-     */
+    /** @see #isRunning() */
     private boolean running;
 
     /**
@@ -113,9 +104,7 @@ public class CloudSim implements Simulation {
      */
     private final Map<SimEntity, Predicate<SimEvent>> waitPredicates;
 
-    /**
-     * @see #isPaused()
-     */
+    /** @see #isPaused() */
     private boolean paused;
 
     /**
@@ -124,7 +113,7 @@ public class CloudSim implements Simulation {
      */
     private double pauseAt = -1;
 
-    /**@see #isAbortRequested() */
+    /** @see #isAbortRequested() */
     private boolean abortRequested;
 
     /** @see #isAborted() */
@@ -142,6 +131,7 @@ public class CloudSim implements Simulation {
     private final Set<EventListener<EventInfo>> onSimulationPauseListeners;
     private final Set<EventListener<EventInfo>> onClockTickListeners;
     private final Set<EventListener<EventInfo>> onSimulationStartListeners;
+
     private boolean processEventsInParallel;
 
     /**
@@ -160,8 +150,8 @@ public class CloudSim implements Simulation {
      * as little as the minTimeBetweenEvents parameter.
      * Internally it creates a {@link CloudInformationService}.
      *
-     * @param minTimeBetweenEvents the minimal period between events. Events
-     * within shorter periods after the last event are discarded.
+     * @param minTimeBetweenEvents the minimal period between events.
+     * Events within shorter periods after the last event are discarded.
      * @see CloudInformationService
      */
     public CloudSim(final double minTimeBetweenEvents) {
@@ -194,8 +184,8 @@ public class CloudSim implements Simulation {
      * Finishes execution of running entities before terminating the simulation,
      * then cleans up internal state.
      *
-     * <b>Note:</b> Should be used only in the <b>synchronous</b> mode (after starting the simulation
-     * with {@link #startSync()}).
+     * <b>Note:</b> Should be used only in the <b>synchronous</b> mode
+     * (after starting the simulation with {@link #startSync()}).
      */
     private void finish() {
         if(abortRequested){
@@ -243,8 +233,6 @@ public class CloudSim implements Simulation {
             }
         }
 
-
-        //Clock is updated when an event is processed
         return clock;
     }
 
@@ -266,7 +254,7 @@ public class CloudSim implements Simulation {
         if(alreadyRunOnce){
             throw new UnsupportedOperationException(
                 "You can't run a simulation that has already run previously. " +
-                    "If you've paused the simulation and want to resume it, call the resume() method.");
+                "If you've paused the simulation and want to resume it, call the resume() method.");
         }
 
         LOGGER.info("{}================== Starting {} =================={}", System.lineSeparator(), VERSION,  System.lineSeparator());
@@ -282,8 +270,8 @@ public class CloudSim implements Simulation {
         }
     }
 
-    private void notifyEventListeners(final Set<EventListener<EventInfo>> eventListeners, final double clock) {
-        eventListeners.forEach(listener -> listener.update(EventInfo.of(listener, clock)));
+    private void notifyEventListeners(final Set<EventListener<EventInfo>> listeners, final double clock) {
+        listeners.forEach(listener -> listener.update(EventInfo.of(listener, clock)));
     }
 
     /**
@@ -306,7 +294,8 @@ public class CloudSim implements Simulation {
         /* If it's time to terminate the simulation, sets a new termination time
          * so that events to finish Cloudlets with a negative length are received.
          * Cloudlets with a negative length must keep running
-         * until a CLOUDLET_FINISH event is sent to the broker or the termination time is reached*/
+         * until a CLOUDLET_FINISH event is sent to the broker or the termination time is reached.
+         */
         if (isTimeToTerminateSimulationUnderRequest()) {
             if(newTerminationTime != -1 && clock >= newTerminationTime){
                 return false;
@@ -319,18 +308,18 @@ public class CloudSim implements Simulation {
 
         checkIfSimulationPauseRequested();
         return true;
-
     }
 
     private boolean logSimulationAborted() {
-        if(abortRequested){
-            aborted = true;
-            LOGGER.info(
-                "{}================================================== Simulation aborted under request at time {} ==================================================",
-                System.lineSeparator(), clock);
-            return true;
+        if (!abortRequested) {
+            return false;
         }
-        return false;
+
+        aborted = true;
+        LOGGER.info(
+            "{}================================================== Simulation aborted under request at time {} ==================================================",
+            System.lineSeparator(), clock);
+        return true;
     }
 
     /**
@@ -395,8 +384,7 @@ public class CloudSim implements Simulation {
     }
 
     /**
-     * Gets the time defined to terminate the simulation
-     * or -1 if it was not set.
+     * Gets the time defined to terminate the simulation or -1 if it was not set.
      * @return
      */
     public double getTerminationTime(){
@@ -439,8 +427,7 @@ public class CloudSim implements Simulation {
     }
 
     /**
-     * Updates the simulation clock and notify listeners
-     * if the clock has changed.
+     * Updates the simulation clock and notify listeners if the clock has changed.
      * @param newTime simulation time to set
      * @return the old simulation time
      *
@@ -467,7 +454,7 @@ public class CloudSim implements Simulation {
     public void addEntity(final CloudSimEntity entity) {
         requireNonNull(entity);
         if (running) {
-            final SimEvent evt = new CloudSimEvent(SimEvent.Type.CREATE, 0, entity, SimEntity.NULL, -1, entity);
+            final var evt = new CloudSimEvent(SimEvent.Type.CREATE, 0, entity, SimEntity.NULL, -1, entity);
             future.addEvent(evt);
         }
 
@@ -479,10 +466,10 @@ public class CloudSim implements Simulation {
 
     protected void removeFinishedEntity(final CloudSimEntity entity){
         if(entity.isAlive()){
-            throw new IllegalStateException(
-                String.format("Alive entity %s cannot be removed from the simulation entity list.", entity)
-            );
+            final var msg = "Alive entity %s cannot be removed from the simulation entity list.";
+            throw new IllegalStateException(String.format(msg, entity));
         }
+
         entities.remove(entity);
     }
 
@@ -566,10 +553,10 @@ public class CloudSim implements Simulation {
      */
     @SuppressWarnings("ForLoopReplaceableByForEach")
     private void executeRunnableEntities(final double until) {
-        /*Uses an indexed for instead of anything else to avoid
-        ConcurrencyModificationException when a HostFaultInjection is created inside a Datacenter*/
+        /* Uses an indexed loop instead of anything else to avoid
+        ConcurrencyModificationException when a HostFaultInjection is created inside a DC. */
         for (int i = 0; i < entities.size(); i++) {
-            CloudSimEntity ent = entities.get(i);
+            final CloudSimEntity ent = entities.get(i);
             if (ent.getState() == SimEntity.State.RUNNABLE) {
                 ent.run(until);
             }
@@ -639,7 +626,7 @@ public class CloudSim implements Simulation {
      *
      * @param queue the queue to get the events from
      * @param predicate the event selection predicate
-     * @param dest Id of entity that the event has to be sent to
+     * @param dest id of entity that the event has to be sent to
      * @return a Stream of events from the queue
      */
     private Stream<SimEvent> filterEventsToDestinationEntity(final EventQueue queue, final Predicate<SimEvent> predicate, final SimEntity dest) {
@@ -686,12 +673,13 @@ public class CloudSim implements Simulation {
      */
     private void processEvent(final SimEvent evt) {
         if (evt.getTime() < clock) {
-            throw new IllegalArgumentException("Past event detected. Event time: " + evt.getTime() + " Simulation clock: " + clock);
+            final var msg = "Past event detected. Event time: %.2f Simulation clock: %.2f";
+            throw new IllegalArgumentException(String.format(msg, evt.getTime(), clock));
         }
 
         setClock(evt.getTime());
         processEventByType(evt);
-        for (final EventListener<SimEvent> listener : onEventProcessingListeners) {
+        for (final var listener : onEventProcessingListeners) {
             listener.update(evt);
         }
     }
@@ -719,17 +707,10 @@ public class CloudSim implements Simulation {
 
     private void processEventByType(final SimEvent evt) {
         switch (evt.getType()) {
-            case NULL:
-                throw new IllegalArgumentException("Event has a null type.");
-            case CREATE:
-                processCreateEvent(evt);
-            break;
-            case SEND:
-                processSendEvent(evt);
-            break;
-            case HOLD_DONE:
-                processHoldEvent(evt);
-            break;
+            case NULL -> throw new IllegalArgumentException("Event has a null type.");
+            case CREATE -> processCreateEvent(evt);
+            case SEND -> processSendEvent(evt);
+            case HOLD_DONE -> processHoldEvent(evt);
         }
     }
 
@@ -740,10 +721,9 @@ public class CloudSim implements Simulation {
     /**
      * Internal method used to add a new entity to the simulation when the
      * simulation is running.
-     *
      * <b>It should not be called from user simulations.</b>
      *
-     * @param entity The new entity
+     * @param entity the new entity to add
      */
     private void addEntityDynamically(final SimEntity entity) {
         requireNonNull(entity);
@@ -764,14 +744,14 @@ public class CloudSim implements Simulation {
             throw new IllegalArgumentException("Attempt to send to a null entity detected.");
         }
 
-        final CloudSimEntity destEnt = (CloudSimEntity)evt.getDestination();
+        final var destEnt = (CloudSimEntity)evt.getDestination();
         if (destEnt.getState() != SimEntity.State.WAITING) {
             deferred.addEvent(evt);
             return;
         }
 
-        final Predicate<SimEvent> p = waitPredicates.get(destEnt);
-        if (p == null || evt.getTag() == 9999 || p.test(evt)) {
+        final var eventPredicate = waitPredicates.get(destEnt);
+        if (eventPredicate == null || evt.getTag() == 9999 || eventPredicate.test(evt)) {
             destEnt.setEventBuffer(new CloudSimEvent(evt));
             destEnt.setState(SimEntity.State.RUNNABLE);
             waitPredicates.remove(destEnt);
@@ -829,11 +809,11 @@ public class CloudSim implements Simulation {
 
     @Override
     public void pauseEntity(final SimEntity src, final double delay) {
-        final SimEvent evt = new CloudSimEvent(SimEvent.Type.HOLD_DONE, delay, src);
+        final var evt = new CloudSimEvent(SimEvent.Type.HOLD_DONE, delay, src);
         addHoldingFutureEvent(src, evt);
     }
 
-    private void addHoldingFutureEvent(SimEntity src, SimEvent evt) {
+    private void addHoldingFutureEvent(final SimEntity src, final SimEvent evt) {
         future.addEvent(evt);
         src.setState(SimEntity.State.HOLDING);
     }
@@ -844,7 +824,7 @@ public class CloudSim implements Simulation {
      * @param delay How many seconds after the current time the entity has to be held
      */
     protected void holdEntity(final SimEntity src, final long delay) {
-        final SimEvent evt = new CloudSimEvent(SimEvent.Type.HOLD_DONE, delay, src);
+        final var evt = new CloudSimEvent(SimEvent.Type.HOLD_DONE, delay, src);
         addHoldingFutureEvent(src, evt);
     }
 
@@ -855,8 +835,10 @@ public class CloudSim implements Simulation {
     }
 
     /**
-     * Effectively pauses the simulation after an pause request.
-     * @return true if the simulation was paused (the simulation is running and was not paused yet), false otherwise
+     * Effectively pauses the simulation after a pause request.
+     * @return true if the simulation was paused
+     *        (the simulation is running and was not paused yet);
+     *        false otherwise
      * @see #pause()
      * @see #pause(double)
      */
@@ -940,7 +922,7 @@ public class CloudSim implements Simulation {
 
     @Override
     public boolean removeOnSimulationPauseListener(final EventListener<EventInfo> listener) {
-        return this.onSimulationPauseListeners.remove(listener);
+        return this.onSimulationPauseListeners.remove(requireNonNull(listener));
     }
 
     @Override

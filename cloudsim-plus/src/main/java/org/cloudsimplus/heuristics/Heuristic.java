@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -64,10 +64,10 @@ public interface Heuristic<S extends HeuristicSolution<?>> {
      * Computes the acceptance probability to define if a neighbor solution
      * has to be accepted or not, compared to the {@link #getBestSolutionSoFar()}.
      *
-     * @return the acceptance probability, in scale from [0 to 1] where
-     * 0 is to maintain the {@link #getBestSolutionSoFar() current solution},
-     * 1 is to accept the neighbor solution, while intermediate
-     * values defines the probability that the neighbor solution
+     * @return the acceptance probability, in scale from [0 to 1] where:
+     * 0 is to maintain the {@link #getBestSolutionSoFar() current solution};
+     * 1 is to accept the neighbor solution;
+     * intermediate values defines the probability that the neighbor solution
      * will be randomly accepted.
      */
     double getAcceptanceProbability();
@@ -124,7 +124,7 @@ public interface Heuristic<S extends HeuristicSolution<?>> {
      * @return the number of times a neighbor solution will be searched
      * at each iteration of the {@link #solve() solution find}.
      */
-    int getNeighborhoodSearchesByIteration();
+    int getSearchesByIteration();
 
     /**
      * Sets the number of times a neighbor solution will be searched
@@ -133,7 +133,7 @@ public interface Heuristic<S extends HeuristicSolution<?>> {
      * @param numberOfNeighborhoodSearches number of neighbor searches to perform
      * at each iteration
      */
-    void setNeighborhoodSearchesByIteration(int numberOfNeighborhoodSearches);
+    void setSearchesByIteration(int numberOfNeighborhoodSearches);
 
 	/**
 	 * Starts the heuristic to find a suboptimal solution.
@@ -143,8 +143,8 @@ public interface Heuristic<S extends HeuristicSolution<?>> {
 	 * @return the final solution
 	 * @see #getBestSolutionSoFar()
      *
-	 * @TODO Try to parallelize the solution finding in order
-     *       to reduce search time using Parallel Streams.
+	 * TODO Try to parallelize the solution finding in order
+     *      to reduce search time using Parallel Streams.
 	 */
 	S solve();
 

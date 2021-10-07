@@ -1,3 +1,26 @@
+/*
+ * CloudSim Plus: A modern, highly-extensible and easier-to-use Framework for
+ * Modeling and Simulation of Cloud Computing Infrastructures and Services.
+ * http://cloudsimplus.org
+ *
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
+ *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
+ *
+ *     This file is part of CloudSim Plus.
+ *
+ *     CloudSim Plus is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CloudSim Plus is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cloudbus.cloudsim.vms;
 
 import org.cloudbus.cloudsim.brokers.DatacenterBroker;
@@ -101,15 +124,13 @@ class VmNull implements Vm {
     @Override public List<VmStateHistoryEntry> getStateHistory() {
         return Collections.emptyList();
     }
-    @Override public double getHostCpuUtilization(double time) { return 0; }
+    @Override public double getCpuPercentUtilization() { return 0; }
     @Override public double getCpuPercentUtilization(double time) {
         return 0.0;
     }
-    @Override public double getCpuPercentRequested(double time) { return 0; }
     @Override public double getCpuPercentRequested() { return 0; }
-    @Override public double getCpuPercentUtilization() {
-        return 0;
-    }
+    @Override public double getCpuPercentRequested(double time) { return 0; }
+    @Override public double getHostCpuUtilization(double time) { return 0; }
     @Override public double getExpectedHostCpuUtilization(double vmCpuUtilizationPercent) { return 0; }
     @Override public double getHostRamUtilization() { return 0; }
     @Override public double getHostBwUtilization() { return 0; }
@@ -150,7 +171,7 @@ class VmNull implements Vm {
     @Override public Vm setBw(long bwCapacity) {
         return this;
     }
-    @Override public void setHost(Host host) {/**/}
+    @Override public Vm setHost(Host host) { return this; }
     @Override public void setInMigration(boolean migrating) {/**/}
     @Override public Vm setRam(long ramCapacity) {
         return this;

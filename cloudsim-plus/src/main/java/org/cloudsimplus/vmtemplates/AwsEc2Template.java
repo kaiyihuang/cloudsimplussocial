@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -25,6 +25,7 @@ package org.cloudsimplus.vmtemplates;
 
 import com.google.gson.Gson;
 import org.cloudbus.cloudsim.util.ResourceLoader;
+import org.cloudbus.cloudsim.vms.Vm;
 
 import java.io.InputStreamReader;
 import java.nio.file.Path;
@@ -35,6 +36,7 @@ import java.nio.file.Paths;
  * <a href="http://aws.amazon.com/ec2/">Amazon EC2 VM Instance</a> template.
  * This class enables reading a template from a JSON file, containing actual configurations for VMs
  * available in <a href="http://aws.amazon.com/">Amazon Web Services</a>.
+ * Such templates can be used to create {@link Vm} instances.
  *
  * <p>For more details, check
  * <a href="http://www.di.ubi.pt/~mario/files/MScDissertation-RaysaOliveira.pdf">Raysa Oliveira's Master Thesis (only in Portuguese)</a>.</p>
@@ -74,6 +76,7 @@ public class AwsEc2Template implements Comparable<AwsEc2Template> {
     public AwsEc2Template(final AwsEc2Template source){
         this.name = source.name;
         this.cpus = source.cpus;
+        this.region = source.region;
         this.memoryInMB = source.memoryInMB;
         this.pricePerHour = source.pricePerHour;
         this.path = Paths.get(source.path.toUri());
@@ -116,24 +119,47 @@ public class AwsEc2Template implements Comparable<AwsEc2Template> {
         return template;
     }
 
+    /**
+     * Gets the name of the template.
+     * @return
+     */
     public String getName() {return name; }
 
+    /**
+     * Sets the name of the template.
+     * @param name the name to set
+     */
     public void setName(final String name) {
         this.name = name;
     }
 
+    /**
+     * Gets the number of CPUs {PEs} for the VM instance
+     * @return
+     */
     public int getCpus() {
         return cpus;
     }
 
+    /**
+     * Sets the number of CPUs {PEs} for the VM instance
+     * @param cpus number of CPUs to set
+     */
     public void setCpus(final int cpus) {
         this.cpus = cpus;
     }
 
+    /**
+     * Gets the VM RAM capacity (in MB)
+     */
     public int getMemoryInMB() {
         return memoryInMB;
     }
 
+    /**
+     * Sets the VM RAM capacity (in MB)
+     * @param memoryInMB RAM capacity to set
+     */
     public void setMemoryInMB(final int memoryInMB) {
         this.memoryInMB = memoryInMB;
     }
@@ -146,7 +172,15 @@ public class AwsEc2Template implements Comparable<AwsEc2Template> {
         return pricePerHour;
     }
 
+    /**
+     * Sets the price per hour of a VM created from this template
+     * @param pricePerHour the price to set
+     */
     public void setPricePerHour(final double pricePerHour) {
+        if(pricePerHour < 0) {
+            throw new IllegalArgumentException("Price cannot be negative");
+        }
+
         this.pricePerHour = pricePerHour;
     }
 
@@ -159,7 +193,12 @@ public class AwsEc2Template implements Comparable<AwsEc2Template> {
         return region;
     }
 
-    public void setRegion(String region) {
+    /**
+     * Sets the AWS Region in which the instance is run.
+     * @param region the region to set
+     * @see <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html">AWS Regions, Availability Zones, and Local Zones</a>
+     */
+    public void setRegion(final String region) {
         this.region = region;
     }
 

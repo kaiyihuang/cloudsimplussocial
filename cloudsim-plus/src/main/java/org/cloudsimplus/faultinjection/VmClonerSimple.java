@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -66,11 +66,11 @@ public class VmClonerSimple implements VmCloner {
 
     @Override
     public Map.Entry<Vm, List<Cloudlet>> clone(final Vm sourceVm) {
-        final Vm clonedVm = vmClonerFunction.apply(requireNonNull(sourceVm));
-        final List<Cloudlet> clonedCloudlets = cloudletsClonerFunction.apply(sourceVm);
-        clonedCloudlets.forEach(cloudlet -> cloudlet.setVm(clonedVm));
+        final var clonedVm = vmClonerFunction.apply(requireNonNull(sourceVm));
+        final var clonedCloudletList = cloudletsClonerFunction.apply(sourceVm);
+        clonedCloudletList.forEach(cloudlet -> cloudlet.setVm(clonedVm));
         clonedVmsNumber++;
-        return new HashMap.SimpleEntry<>(clonedVm, clonedCloudlets);
+        return new HashMap.SimpleEntry<>(clonedVm, clonedCloudletList);
     }
 
     @Override

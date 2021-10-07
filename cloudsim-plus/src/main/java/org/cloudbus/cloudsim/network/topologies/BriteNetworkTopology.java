@@ -11,6 +11,7 @@ import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.network.DelayMatrix;
 import org.cloudbus.cloudsim.network.topologies.readers.TopologyReaderBrite;
 import org.cloudbus.cloudsim.util.ResourceLoader;
+import org.cloudbus.cloudsim.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,13 +60,11 @@ public final class BriteNetworkTopology implements NetworkTopology {
     /** @see #getBwMatrix() */
     private double[][] bwMatrix;
 
-    /**
-     * @see #getTopologicalGraph()
-     */
+    /** @see #getTopologicalGraph() */
     private TopologicalGraph graph;
 
     /**
-     * The entitiesMap between CloudSim entities and BRITE entities.
+     * The map between CloudSim entities and BRITE entities.
      * Each key is a CloudSim entity and each value the corresponding BRITE entity ID.
      */
     private Map<SimEntity, Integer> entitiesMap;
@@ -81,7 +80,7 @@ public final class BriteNetworkTopology implements NetworkTopology {
     }
 
     /**
-     * Instantiates a Network Topology.
+     * Instantiates an empty Network Topology.
      * @see #BriteNetworkTopology(String)
      * @see #BriteNetworkTopology(InputStreamReader)
      * @see #getInstance(String)
@@ -120,7 +119,7 @@ public final class BriteNetworkTopology implements NetworkTopology {
      */
     private BriteNetworkTopology(final InputStreamReader reader) {
         this();
-        final TopologyReaderBrite instance = new TopologyReaderBrite();
+        final var instance = new TopologyReaderBrite();
         graph = instance.readGraphFile(reader);
         generateMatrices();
     }
@@ -130,12 +129,8 @@ public final class BriteNetworkTopology implements NetworkTopology {
      * between elements.
      */
     private void generateMatrices() {
-        // creates the delay matrix
         delayMatrix = new DelayMatrix(getTopologicalGraph(), false);
-
-        // creates the bw matrix
         bwMatrix = createBwMatrix(getTopologicalGraph(), false);
-
         networkEnabled = true;
     }
 
@@ -149,24 +144,16 @@ public final class BriteNetworkTopology implements NetworkTopology {
      */
     private double[][] createBwMatrix(final TopologicalGraph graph, final boolean directed) {
         final int nodes = graph.getNumberOfNodes();
-
-        final double[][] mtx = new double[nodes][nodes];
-
-        // cleanup matrix
-        for (int i = 0; i < nodes; i++) {
-            for (int j = 0; j < nodes; j++) {
-                mtx[i][j] = 0.0;
-            }
-        }
+        final double[][] matrix = Util.newSquareMatrix(nodes);
 
         for (final TopologicalLink edge : graph.getLinksList()) {
-            mtx[edge.getSrcNodeID()][edge.getDestNodeID()] = edge.getLinkBw();
+            matrix[edge.getSrcNodeID()][edge.getDestNodeID()] = edge.getLinkBw();
             if (!directed) {
-                mtx[edge.getDestNodeID()][edge.getSrcNodeID()] = edge.getLinkBw();
+                matrix[edge.getDestNodeID()][edge.getSrcNodeID()] = edge.getLinkBw();
             }
         }
 
-        return mtx;
+        return matrix;
     }
 
     @Override
@@ -179,21 +166,22 @@ public final class BriteNetworkTopology implements NetworkTopology {
             entitiesMap = new HashMap<>();
         }
 
-        // maybe add the nodes
         addNodeMapping(src);
         addNodeMapping(dest);
 
-        // generate a new link
-        graph.addLink(new TopologicalLink(entitiesMap.get(src), entitiesMap.get(dest), (float) latency, (float) bandwidth));
-
+        graph.addLink(new TopologicalLink(entitiesMap.get(src), entitiesMap.get(dest), latency, bandwidth));
         generateMatrices();
     }
 
     @Override
-    public void removeLink(SimEntity src, SimEntity dest) {
+    public void removeLink(final SimEntity src, final SimEntity dest) {
         throw new UnsupportedOperationException("Removing links is not yet supported on BriteNetworkTopologies");
     }
 
+    /**
+     * Adds a new node in the network topology graph if it's absent.
+     * @param entity the CloudSim entity to check if there isn't a BRITE mapping yet.
+     */
     private void addNodeMapping(final SimEntity entity) {
         if (entitiesMap.putIfAbsent(entity, nextIdx) == null) {
             graph.addNode(new TopologicalNode(nextIdx));

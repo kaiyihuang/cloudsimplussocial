@@ -8,8 +8,8 @@ import org.cloudbus.cloudsim.power.PowerMeasurement;
  * @see org.cloudbus.cloudsim.power.PowerMeter
  */
 public class PowerModelHostSimple extends PowerModelHost {
-    private double maxPower;
-    private double staticPower;
+    private final double maxPower;
+    private final double staticPower;
 
     /**
      * Instantiates a {@link PowerModelHostSimple} by specifying its static and max power usage.
@@ -18,6 +18,7 @@ public class PowerModelHostSimple extends PowerModelHost {
      * @param staticPower power (in watts) the host consumes when idle.
      */
     public PowerModelHostSimple(final double maxPower, final double staticPower) {
+        super();
         if (maxPower < staticPower) {
             throw new IllegalArgumentException("maxPower has to be bigger than staticPower");
         }

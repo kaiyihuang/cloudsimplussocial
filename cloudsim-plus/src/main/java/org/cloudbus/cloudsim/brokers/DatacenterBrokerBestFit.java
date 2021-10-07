@@ -1,3 +1,26 @@
+/*
+ * CloudSim Plus: A modern, highly-extensible and easier-to-use Framework for
+ * Modeling and Simulation of Cloud Computing Infrastructures and Services.
+ * http://cloudsimplus.org
+ *
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
+ *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
+ *
+ *     This file is part of CloudSim Plus.
+ *
+ *     CloudSim Plus is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CloudSim Plus is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cloudbus.cloudsim.brokers;
 
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
@@ -14,7 +37,7 @@ import java.util.Comparator;
  * The Broker then places the submitted Vm's at the first Datacenter found.
  * If there isn't capacity in that one, it will try the other ones.
  *
- * @author Humaira Abdul Salam
+ * @author Manoel Campos da Silva Filho
  * @since CloudSim Plus 4.3.8
  */
 public class DatacenterBrokerBestFit extends DatacenterBrokerSimple {
@@ -50,7 +73,7 @@ public class DatacenterBrokerBestFit extends DatacenterBrokerSimple {
             .min(Comparator.comparingLong(Vm::getExpectedFreePesNumber))
             .orElse(Vm.NULL);
 
-        if (mappedVm == Vm.NULL) {
+        if (Vm.NULL.equals(mappedVm)) {
             LOGGER.warn("{}: {}: {} (PEs: {}) couldn't be mapped to any suitable VM.",
                 getSimulation().clockStr(), getName(), cloudlet, cloudlet.getNumberOfPes());
         } else {

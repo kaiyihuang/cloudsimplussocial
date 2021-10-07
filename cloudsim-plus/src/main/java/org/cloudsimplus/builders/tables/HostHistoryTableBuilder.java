@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -69,23 +69,24 @@ public class HostHistoryTableBuilder extends TableBuilderAbstract<HostStateHisto
     @Override
     protected void createTableColumns() {
         TableColumn col = getTable().addColumn("Time ").setFormat("%5.0f");
-        addColumnDataFunction(col, HostStateHistoryEntry::getTime);
+        addColumnDataFunction(col, HostStateHistoryEntry::time);
 
-        col = getTable().addColumn("Requested").setFormat("%9.0f");
-        addColumnDataFunction(col, HostStateHistoryEntry::getRequestedMips);
+        final String format = "%9.0f";
+        col = getTable().addColumn("Requested").setFormat(format);
+        addColumnDataFunction(col, HostStateHistoryEntry::requestedMips);
 
-        col = getTable().addColumn("Allocated").setFormat("%9.0f");
-        addColumnDataFunction(col, HostStateHistoryEntry::getAllocatedMips);
+        col = getTable().addColumn("Allocated").setFormat(format);
+        addColumnDataFunction(col, HostStateHistoryEntry::allocatedMips);
 
         col = getTable().addColumn("Used").setFormat("%3.0f%%");
-        addColumnDataFunction(col, history -> history.getPercentUsage()*100);
+        addColumnDataFunction(col, history -> history.percentUsage()*100);
 
-        addColumnDataFunction(getTable().addColumn("Host Active"), HostStateHistoryEntry::isActive);
+        addColumnDataFunction(getTable().addColumn("Host Active"), HostStateHistoryEntry::active);
 
-        col = getTable().addColumn("Host Total MIPS").setFormat("%9.0f");
+        col = getTable().addColumn("Host Total MIPS").setFormat(format);
         addColumnDataFunction(col, history -> host.getTotalMipsCapacity());
 
         col = getTable().addColumn("Host Total Usage").setFormat("%5.1f%%");
-        addColumnDataFunction(col, history -> history.getAllocatedMips()/host.getTotalMipsCapacity()*100);
+        addColumnDataFunction(col, history -> history.allocatedMips()/host.getTotalMipsCapacity()*100);
     }
 }

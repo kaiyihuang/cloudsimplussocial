@@ -44,7 +44,7 @@ public class CloudletSendTask extends CloudletTask {
     /**
      * Creates a new task.
      *
-     * @param id task id
+     * @param id id to assign to the task
      */
     public CloudletSendTask(final int id) {
         super(id);
@@ -61,7 +61,7 @@ public class CloudletSendTask extends CloudletTask {
      * @throws RuntimeException when a NetworkCloudlet was not assigned to the Task
      * @throws IllegalArgumentException when the source or destination Cloudlet doesn't have an assigned VM
      */
-    public VmPacket addPacket(final Cloudlet destinationCloudlet, final long bytes) {
+    public VmPacket addPacket(final NetworkCloudlet destinationCloudlet, final long bytes) {
         if(getCloudlet() == null) {
             throw new IllegalStateException("You must assign a NetworkCloudlet to this Task before adding packets.");
         }
@@ -72,7 +72,7 @@ public class CloudletSendTask extends CloudletTask {
             throw new IllegalStateException("The destination Cloudlet has to have an assigned VM.");
         }
 
-        final VmPacket packet = new VmPacket(
+        final var packet = new VmPacket(
                 getCloudlet().getVm(), destinationCloudlet.getVm(),
                 bytes, getCloudlet(), destinationCloudlet);
         packetsToSend.add(packet);
@@ -88,25 +88,20 @@ public class CloudletSendTask extends CloudletTask {
 
     /**
      * Gets the list of packets to send,
-     * updating the send time to the given time
+     * updating packets' send time to the given time
      * and clearing the list of packets, marking the
      * task as finished.
      *
-     * @param sendTime the send time to update all packets in the list
-     * @return the packet list with the send time
-     * updated to the given time
+     * @param sendTime packets' send time to set (in seconds)
+     * @return the packet list with their send time updated to the given time
      */
     public List<VmPacket> getPacketsToSend(final double sendTime) {
         packetsToSend.forEach(pkt ->  pkt.setSendTime(sendTime));
 
-        if(isFinished()) {
+        if(isFinished())
             packetsToSend.clear();
-        }
-        else {
-            setFinished(true);
-        }
+        else setFinished(true);
 
         return packetsToSend;
     }
-
 }

@@ -11,9 +11,10 @@ package org.cloudbus.cloudsim.network.topologies;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * This class represents a graph containing vertices (nodes) and edges (links),
+ * Represents a graph containing vertices (nodes) and edges (links),
  * used for input with a network-layer.
  *
  * <p>Graphical-Output Restrictions:
@@ -28,14 +29,17 @@ import java.util.List;
  */
 public class TopologicalGraph {
     /**
-     * The list of links of the network graph.
+     * The list of links (edges) of the network graph.
      */
     private final List<TopologicalLink> linksList;
 
+    /**
+     * The list of nodes (vertices) of the network graph.
+     */
     private final List<TopologicalNode> nodeList;
 
     /**
-     * Creates an empty graph-object.
+     * Creates an empty network topology graph.
      */
     public TopologicalGraph() {
         linksList = new LinkedList<>();
@@ -43,21 +47,21 @@ public class TopologicalGraph {
     }
 
     /**
-     * Adds an link between two topological nodes.
+     * Adds a link between two topological nodes.
      *
      * @param edge the topological link
      */
     public void addLink(final TopologicalLink edge) {
-        linksList.add(edge);
+        linksList.add(Objects.requireNonNull(edge));
     }
 
     /**
-     * Adds an Topological Node to this graph.
+     * Adds a Topological Node to this graph.
      *
      * @param node the topological node to add
      */
     public void addNode(final TopologicalNode node) {
-        nodeList.add(node);
+        nodeList.add(Objects.requireNonNull(node));
     }
 
     /**
@@ -89,7 +93,7 @@ public class TopologicalGraph {
 
     @Override
     public String toString() {
-        final StringBuilder builder = new StringBuilder(61);
+        final var builder = new StringBuilder(61);
         builder.append("topological-node-information: ").append(System.lineSeparator());
 
         for (final TopologicalNode node : nodeList) {

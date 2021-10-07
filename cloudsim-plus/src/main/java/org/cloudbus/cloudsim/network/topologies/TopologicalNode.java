@@ -11,8 +11,8 @@ package org.cloudbus.cloudsim.network.topologies;
 import java.util.Objects;
 
 /**
- * Represents an topological network node that retrieves its information from a
- * topological-generated file (eg. topology-generator)
+ * Represents a topological network node that retrieves its information from a
+ * topological-generated file (e.g. topology-generator)
  *
  * @author Thomas Hohnstein
  * @since CloudSim Toolkit 1.0
@@ -100,10 +100,10 @@ public class TopologicalNode {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final TopologicalNode other = (TopologicalNode) o;
+    public boolean equals(final Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        final TopologicalNode other = (TopologicalNode) obj;
         return other.id == id;
     }
 

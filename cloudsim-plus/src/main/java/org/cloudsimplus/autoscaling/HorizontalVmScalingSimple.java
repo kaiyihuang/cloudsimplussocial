@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -45,8 +45,8 @@ import java.util.function.Supplier;
  * <br>
  * <p>The overload condition has to be defined
  * by providing a {@link Predicate} using the {@link #setOverloadPredicate(Predicate)} method.
- * Check the {@link HorizontalVmScaling} documentation for details on how to enable horizontal down scaling
- * using the {@link DatacenterBroker}.
+ * Check the {@link HorizontalVmScaling} documentation for details on how to enable
+ * horizontal down scaling using the {@link DatacenterBroker}.
  * </p>
  *
  * @author Manoel Campos da Silva Filho
@@ -62,7 +62,7 @@ public class HorizontalVmScalingSimple extends VmScalingAbstract implements Hori
     /**
      * The last number of cloudlet creation requests
      * received by the broker. This is not related to the VM,
-     * but the overall cloudlets creation requests.
+     * but the overall Cloudlets creation requests.
      */
     private long cloudletCreationRequests;
 
@@ -99,13 +99,13 @@ public class HorizontalVmScalingSimple extends VmScalingAbstract implements Hori
 
     @Override
     protected boolean requestUpScaling(final double time) {
-        final String timeStr = String.format("%.2f", time);
         if(!haveNewCloudletsArrived()){
             return false;
         }
 
         final double vmCpuUsagePercent = getVm().getCpuPercentUtilization() * 100;
         final Vm newVm = getVmSupplier().get();
+        final String timeStr = String.format("%.2f", time);
         LOGGER.info(
             "{}: {}{}: Requesting creation of {} to receive new Cloudlets in order to balance load of {}. {} CPU usage is {}%",
             timeStr, getClass().getSimpleName(), getVm(), newVm, getVm(), getVm().getId(), vmCpuUsagePercent);
@@ -126,11 +126,11 @@ public class HorizontalVmScalingSimple extends VmScalingAbstract implements Hori
 
     @Override
     public final boolean requestUpScalingIfPredicateMatches(final VmHostEventInfo evt) {
-        if(!isTimeToCheckPredicate(evt.getTime())) {
-            return false;
+        if (isTimeToCheckPredicate(evt.getTime())) {
+            setLastProcessingTime(evt.getTime());
+            return overloadPredicate.test(getVm()) && requestUpScaling(evt.getTime());
         }
 
-        setLastProcessingTime(evt.getTime());
-        return overloadPredicate.test(getVm()) && requestUpScaling(evt.getTime());
+        return false;
     }
 }

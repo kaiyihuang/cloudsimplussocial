@@ -22,9 +22,11 @@ import java.util.TreeSet;
  * readiness to process Cloudlets by registering themselves with this entity.
  * Other entities such as the broker can contact this class for
  * resource discovery service, which returns a list of registered resource.
+ *
  * <p>
  * In summary, it acts like a yellow page service.
  * An instance of this class is automatically created by CloudSim upon initialisation of the simulation.
+ * </p>
  *
  * @author Manzur Murshed
  * @author Rajkumar Buyya
@@ -47,9 +49,9 @@ public class CloudInformationService extends CloudSimEntity {
     /**
      * Instantiates a new CloudInformationService object.
      *
-     * @param simulation The CloudSim instance that represents the simulation the Entity is related to
+     * @param simulation CloudSim instance that represents the simulation the Entity belongs to
      */
-    CloudInformationService(CloudSim simulation) {
+    CloudInformationService(final CloudSim simulation) {
         super(simulation);
         datacenterList = new TreeSet<>();
         cisList = new TreeSet<>();
@@ -62,24 +64,13 @@ public class CloudInformationService extends CloudSimEntity {
     protected void startInternal() {/**/}
 
     @Override
-    public void processEvent(SimEvent evt) {
+    public void processEvent(final SimEvent evt) {
         switch (evt.getTag()) {
-            case CloudSimTags.REGISTER_REGIONAL_CIS:
-                cisList.add((CloudInformationService) evt.getData());
-            break;
-
-            case CloudSimTags.REQUEST_REGIONAL_CIS:
-                super.send(evt.getSource(), 0, evt.getTag(), cisList);
-            break;
-
-            case CloudSimTags.DATACENTER_REGISTRATION_REQUEST:
-                datacenterList.add((Datacenter) evt.getData());
-            break;
-
+            case CloudSimTags.REGISTER_REGIONAL_CIS -> cisList.add((CloudInformationService) evt.getData());
+            case CloudSimTags.REQUEST_REGIONAL_CIS -> super.send(evt.getSource(), 0, evt.getTag(), cisList);
+            case CloudSimTags.DC_REGISTRATION_REQUEST -> datacenterList.add((Datacenter) evt.getData());
             // A Broker is requesting a list of all datacenters.
-            case CloudSimTags.DATACENTER_LIST_REQUEST:
-                super.send(evt.getSource(), 0, evt.getTag(), datacenterList);
-            break;
+            case CloudSimTags.DC_LIST_REQUEST -> super.send(evt.getSource(), 0, evt.getTag(), datacenterList);
         }
     }
 

@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -31,8 +31,13 @@ package org.cloudsimplus.traces.google;
  * @author Manoel Campos da Silva Filho
  * @since CloudSim Plus 4.0.0
  */
-abstract class MachineDataAbstract {
+class MachineDataBase {
     private long machineId;
+
+    /**
+     * A protected construtor to avoid directly instantiation of this base class.
+     */
+    protected MachineDataBase(){/**/}
 
     /**
      * Gets the machineID that indicates the machine onto which the task was scheduled.
@@ -41,7 +46,7 @@ abstract class MachineDataAbstract {
      */
     public long getMachineId(){ return machineId; }
 
-    /* default */ MachineDataAbstract setMachineId(final long machineId) {
+    /* default */ MachineDataBase setMachineId(final long machineId) {
         this.machineId = machineId;
         return this;
     }

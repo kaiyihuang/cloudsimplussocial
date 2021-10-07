@@ -70,23 +70,19 @@ import java.util.List;
 public class CloudletReceiveTask extends CloudletTask {
     private final List<VmPacket> packetsReceived;
 
-    /**
-     * @see #getExpectedPacketsToReceive()
-     */
+    /** @see #getExpectedPacketsToReceive() */
     private long expectedPacketsToReceive;
 
-    /**
-     * @see #getSourceVm()
-     */
+    /** @see #getSourceVm() */
     private final Vm sourceVm;
 
     /**
      * Creates a new task.
      *
-     * @param id task id
-     * @param sourceVm the Vm where it is expected to receive packets from
+     * @param id id to assign to the task
+     * @param sourceVm Vm where it's expected to receive packets from
      */
-    public CloudletReceiveTask(int id, Vm sourceVm) {
+    public CloudletReceiveTask(final int id, final Vm sourceVm) {
         super(id);
         this.packetsReceived = new ArrayList<>();
         this.sourceVm = sourceVm;
@@ -94,11 +90,11 @@ public class CloudletReceiveTask extends CloudletTask {
 
     /**
      * Receives a packet sent from a {@link CloudletSendTask}
-     * and add it the the received packet list.
+     * and add it to the received packet list.
      *
      * @param packet the packet received
      */
-    public void receivePacket(VmPacket packet) {
+    public void receivePacket(final VmPacket packet) {
         packet.setReceiveTime(getCloudlet().getSimulation().clock());
         this.packetsReceived.add(packet);
         final boolean finished = this.packetsReceived.size() >= expectedPacketsToReceive;
@@ -137,8 +133,7 @@ public class CloudletReceiveTask extends CloudletTask {
      * is marked as finished.
      * @param expectedPacketsToReceive the number of expected packets to set
      */
-    public void setExpectedPacketsToReceive(long expectedPacketsToReceive) {
+    public void setExpectedPacketsToReceive(final long expectedPacketsToReceive) {
         this.expectedPacketsToReceive = expectedPacketsToReceive;
     }
-
 }

@@ -1,9 +1,31 @@
+/*
+ * CloudSim Plus: A modern, highly-extensible and easier-to-use Framework for
+ * Modeling and Simulation of Cloud Computing Infrastructures and Services.
+ * http://cloudsimplus.org
+ *
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
+ *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
+ *
+ *     This file is part of CloudSim Plus.
+ *
+ *     CloudSim Plus is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CloudSim Plus is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cloudbus.cloudsim.allocationpolicies;
 
 import org.cloudbus.cloudsim.hosts.Host;
 import org.cloudbus.cloudsim.vms.Vm;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -37,12 +59,12 @@ public class VmAllocationPolicyRoundRobin extends VmAllocationPolicyAbstract imp
 
     @Override
     protected Optional<Host> defaultFindHostForVm(final Vm vm) {
-        final List<Host> hostList = getHostList();
+        final var hostList = getHostList();
         /* The for loop just defines the maximum number of Hosts to try.
          * When a suitable Host is found, the method returns immediately. */
         final int maxTries = hostList.size();
         for (int i = 0; i < maxTries; i++) {
-            final Host host = hostList.get(lastHostIndex);
+            final var host = hostList.get(lastHostIndex);
             //Different from the FirstFit policy, it always increments the host index.
             lastHostIndex = ++lastHostIndex % hostList.size();
             if (host.isSuitableForVm(vm)) {

@@ -14,8 +14,8 @@ import org.cloudbus.cloudsim.network.HostPacket;
 import org.cloudbus.cloudsim.util.BytesConversion;
 
 /**
- * This class represents an Aggregate Switch in a Datacenter network. It
- * interacts with other Datacenter in order to exchange packets.
+ * This class represents an Aggregate Switch in a Datacenter network.
+ * It interacts with other Datacenter in order to exchange packets.
  *
  * <p>Please refer to following publication for more details:
  * <ul>
@@ -62,10 +62,10 @@ public class AggregateSwitch extends AbstractSwitch {
      * Instantiates a Aggregate AbstractSwitch specifying the Datacenter that are
      * connected to its downlink and uplink ports and corresponding bandwidths.
      *
-     * @param simulation The CloudSim instance that represents the simulation the Entity is related to
+     * @param simulation the CloudSim instance that represents the simulation the Entity belongs
      * @param dc The Datacenter where the switch is connected to
      */
-    public AggregateSwitch(CloudSim simulation, NetworkDatacenter dc) {
+    public AggregateSwitch(final CloudSim simulation, final NetworkDatacenter dc) {
         super(simulation, dc);
         setUplinkBandwidth(RootSwitch.DOWNLINK_BW);
         setDownlinkBandwidth(DOWNLINK_BW);
@@ -74,29 +74,25 @@ public class AggregateSwitch extends AbstractSwitch {
     }
 
     @Override
-    protected void processPacketDown(SimEvent evt) {
-        // packet is coming from root so need to be sent to edge switch
-        // find the id for edge switch
+    protected void processPacketDown(final SimEvent evt) {
+        /* packet is coming from root switch,
+        so it needs to be sent to edge switch */
         super.processPacketDown(evt);
         final HostPacket netPkt = (HostPacket) evt.getData();
-        final Switch downlinkSw = getVmEdgeSwitch(netPkt);
+        final Switch downlinkSw = netPkt.getVmEdgeSwitch();
         addPacketToSendToDownlinkSwitch(downlinkSw, netPkt);
     }
 
     @Override
-    protected void processPacketUp(SimEvent evt) {
-        // packet is coming from edge router so need to be sent to
-        // either root or another edge switch
-        // find the id for edge switch
+    protected void processPacketUp(final SimEvent evt) {
+        // packet is coming from edge router, so it needs to be sent to either root or another edge switch
         super.processPacketUp(evt);
         final HostPacket netPkt = (HostPacket) evt.getData();
-        final Switch downlinkSw = getVmEdgeSwitch(netPkt);
+        final Switch downlinkSw = netPkt.getVmEdgeSwitch();
 
-        if (findConnectedEdgeSwitch(downlinkSw)) {
+        if (findConnectedEdgeSwitch(downlinkSw))
             addPacketToSendToDownlinkSwitch(downlinkSw, netPkt);
-        } else { // send to up
-            addPacketToBeSentToFirstUplinkSwitch(netPkt);
-        }
+        else addPacketToBeSentToFirstUplinkSwitch(netPkt);
     }
 
     /**
@@ -104,7 +100,7 @@ public class AggregateSwitch extends AbstractSwitch {
      * @param edgeSwitch the id of the edge switch to check if the aggregate switch is connected to
      * @return true if the edge switch was found, false otherwise
      */
-    private boolean findConnectedEdgeSwitch(Switch edgeSwitch) {
+    private boolean findConnectedEdgeSwitch(final Switch edgeSwitch) {
         return getDownlinkSwitches().stream().anyMatch(edgeSwitch::equals);
     }
 

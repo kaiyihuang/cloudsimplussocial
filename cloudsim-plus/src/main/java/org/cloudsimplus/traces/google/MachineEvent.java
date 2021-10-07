@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -41,7 +41,7 @@ import java.util.function.Function;
  * that creates Hosts according to the developer needs.</p>
  *
  * <p>The {@link GoogleMachineEventsTraceReader} cannot create the Hosts itself
- * by hardcoding some simulation specific parameters such as the {@link VmScheduler}
+ * by hard-coding some simulation specific parameters such as the {@link VmScheduler}
  * or {@link ResourceProvisioner}. This way, it request a {@link Function} implemented
  * by the developer using the {@link GoogleMachineEventsTraceReader} class
  * that has the custom logic to create Hosts.
@@ -54,7 +54,7 @@ import java.util.function.Function;
  * @author Manoel Campos da Silva Filho
  * @since CloudSim Plus 4.0.0
  */
-public final class MachineEvent extends MachineDataAbstract {
+public final class MachineEvent extends MachineDataBase {
     private double timestamp;
     private long ram;
     private int cpuCores;
@@ -64,13 +64,13 @@ public final class MachineEvent extends MachineDataAbstract {
      * according the {@link GoogleMachineEventsTraceReader#getMaxRamCapacity()}.
      *
      * @return
-     * @see GoogleMachineEventsTraceReader.FieldIndex#RAM_CAPACITY
+     * @see MachineEventField#RAM_CAPACITY
      */
     public long getRam(){
         return ram;
     }
 
-    protected MachineEvent setRam(final long ram){
+    MachineEvent setRam(final long ram){
         this.ram = ram;
         return this;
     }
@@ -80,7 +80,7 @@ public final class MachineEvent extends MachineDataAbstract {
      * according the {@link GoogleMachineEventsTraceReader#getMaxCpuCores()}.
      *
      * @return
-     * @see GoogleMachineEventsTraceReader.FieldIndex#CPU_CAPACITY
+     * @see MachineEventField#CPU_CAPACITY
      */
     public int getCpuCores() {
         return cpuCores;
@@ -95,7 +95,7 @@ public final class MachineEvent extends MachineDataAbstract {
      * Gets the time the event happened (converted to seconds).
      *
      * @return
-     * @see GoogleMachineEventsTraceReader.FieldIndex#TIMESTAMP
+     * @see MachineEventField#TIMESTAMP
      */
     public double getTimestamp() {
         return timestamp;

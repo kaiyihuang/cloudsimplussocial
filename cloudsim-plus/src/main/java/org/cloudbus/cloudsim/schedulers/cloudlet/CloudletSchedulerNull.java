@@ -8,6 +8,7 @@ import org.cloudbus.cloudsim.vms.Vm;
 import org.cloudsimplus.listeners.CloudletResourceAllocationFailEventInfo;
 import org.cloudsimplus.listeners.EventListener;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,6 +20,9 @@ import java.util.List;
  * @see CloudletScheduler#NULL
  */
 final class CloudletSchedulerNull implements CloudletScheduler {
+    @Serial
+    private static final long serialVersionUID = -3167964772291527087L;
+
     @Override public Cloudlet cloudletFail(Cloudlet cloudlet) { return Cloudlet.NULL; }
     @Override public Cloudlet cloudletCancel(Cloudlet cloudlet) {
         return Cloudlet.NULL;
@@ -73,7 +77,7 @@ final class CloudletSchedulerNull implements CloudletScheduler {
     @Override public List<CloudletExecution> getCloudletWaitingList() { return Collections.emptyList(); }
     @Override public void deallocatePesFromVm(long pesToRemove) {/**/}
     @Override public List<Cloudlet> getCloudletList() { return Collections.emptyList(); }
-    @Override public void clear() { }
+    @Override public void clear() {/**/}
     @Override public CloudletScheduler addOnCloudletResourceAllocationFail(EventListener<CloudletResourceAllocationFailEventInfo> listener) { return this; }
     @Override public boolean removeOnCloudletResourceAllocationFail(EventListener<CloudletResourceAllocationFailEventInfo> listener) { return false; }
 }

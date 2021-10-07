@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -28,7 +28,7 @@ import org.cloudbus.cloudsim.vms.Vm;
 import java.util.Objects;
 
 /**
- * A base class for implementing {@link HorizontalVmScaling} and
+ * An abstract class for implementing {@link HorizontalVmScaling} and
  * {@link VerticalVmScaling}.
  *
  * @author Manoel Campos da Silva Filho
@@ -39,7 +39,7 @@ public abstract class VmScalingAbstract implements VmScaling {
     private Vm vm;
 
     protected VmScalingAbstract() {
-        this.setVm(Vm.NULL);
+        this.vm = Vm.NULL;
     }
 
     @Override
@@ -48,9 +48,8 @@ public abstract class VmScalingAbstract implements VmScaling {
     }
 
     @Override
-    public final VmScaling setVm(final Vm vm) {
+    public void setVm(final Vm vm) {
         this.vm = Objects.requireNonNull(vm);
-        return this;
     }
 
     /**
@@ -65,8 +64,9 @@ public abstract class VmScalingAbstract implements VmScaling {
 
     /**
      * Performs the actual request to scale the Vm up or down,
-     * depending if it is over or underloaded, respectively.
-     * This method is automatically called by {@link VmScaling#requestUpScalingIfPredicateMatches(org.cloudsimplus.listeners.VmHostEventInfo)}
+     * depending on whether it is over or underloaded, respectively.
+     * This method is automatically called by
+     * {@link VmScaling#requestUpScalingIfPredicateMatches(org.cloudsimplus.listeners.VmHostEventInfo)}
      * when it is verified that the Vm is over or underloaded.
      *
      * @param time current simulation time

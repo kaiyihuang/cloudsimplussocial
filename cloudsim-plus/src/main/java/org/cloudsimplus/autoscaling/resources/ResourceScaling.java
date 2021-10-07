@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -27,8 +27,9 @@ import org.cloudbus.cloudsim.datacenters.Datacenter;
 import org.cloudsimplus.autoscaling.VerticalVmScaling;
 
 /**
- * A {@link FunctionalInterface} to define how the capacity of the resource to be scaled by a {@link VerticalVmScaling}
- * will be resized, according to the defined {@link VerticalVmScaling#getScalingFactor() scaling factor}.
+ * A {@link FunctionalInterface} to define how the capacity of the resource to be scaled by
+ * a {@link VerticalVmScaling} will be resized,
+ * according to the defined {@link VerticalVmScaling#getScalingFactor() scaling factor}.
  *
  * <p>The interval in which the under and overload conditions are checked
  * is defined by the {@link Datacenter#getSchedulingInterval()}.
@@ -60,5 +61,4 @@ public interface ResourceScaling {
      * @return
      */
     double getResourceAmountToScale(VerticalVmScaling vmScaling);
-
 }

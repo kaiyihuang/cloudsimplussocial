@@ -58,7 +58,7 @@ public class VmSchedulerTimeShared extends VmSchedulerAbstract {
      *
      */
     public VmSchedulerTimeShared() {
-        this(DEFAULT_VM_MIGRATION_CPU_OVERHEAD);
+        this(DEF_VM_MIGRATION_CPU_OVERHEAD);
     }
 
     /**
@@ -73,10 +73,7 @@ public class VmSchedulerTimeShared extends VmSchedulerAbstract {
 
     @Override
     public boolean allocatePesForVmInternal(final Vm vm, final MipsShare requestedMips) {
-        if(!allocateMipsShareForVmInternal(vm, requestedMips)) {
-            return false;
-        }
-        return true;
+        return allocateMipsShareForVmInternal(vm, requestedMips);
     }
 
     /**

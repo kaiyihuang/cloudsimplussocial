@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -373,31 +373,12 @@ public final class GoogleTaskUsageTraceReader extends GoogleTraceReaderAbstract<
 
     @Override
     protected boolean processParsedLineInternal() {
-        final TaskUsage taskUsage = createTaskUsageFromTraceLine();
+        final TaskUsage taskUsage = new TaskUsage(this);
         return brokers.stream()
                .flatMap(broker -> getAvailableObjects().stream())
                .filter(cloudlet -> cloudlet.getId() == taskUsage.getUniqueTaskId())
                .findFirst()
                .map(cloudlet -> requestCloudletUsageChange(cloudlet, taskUsage)).isPresent();
-    }
-
-    private TaskUsage createTaskUsageFromTraceLine() {
-        final TaskUsage usage = new TaskUsage();
-        usage
-            .setStartTime(FieldIndex.START_TIME.getValue(this))
-            .setEndTime(FieldIndex.END_TIME.getValue(this))
-            .setMeanCpuUsageRate(FieldIndex.MEAN_CPU_USAGE_RATE.getValue(this))
-            .setCanonicalMemoryUsage(FieldIndex.CANONICAL_MEMORY_USAGE.getValue(this))
-            .setAssignedMemoryUsage(FieldIndex.ASSIGNED_MEMORY_USAGE.getValue(this))
-            .setMaximumMemoryUsage(FieldIndex.MAXIMUM_MEMORY_USAGE.getValue(this))
-            .setMeanDiskIoTime(FieldIndex.MEAN_DISK_IO_TIME.getValue(this))
-            .setMeanLocalDiskSpaceUsed(FieldIndex.MEAN_LOCAL_DISK_SPACE_USED.getValue(this))
-            .setMaximumCpuUsage(FieldIndex.MAXIMUM_CPU_USAGE.getValue(this))
-            .setMaximumDiskIoTime(FieldIndex.MAXIMUM_DISK_IO_TIME.getValue(this))
-            .setJobId(FieldIndex.JOB_ID.getValue(this))
-            .setTaskIndex(FieldIndex.TASK_INDEX.getValue(this))
-            .setMachineId(FieldIndex.MACHINE_ID.getValue(this));
-        return usage;
     }
 
     /**
@@ -462,8 +443,8 @@ public final class GoogleTaskUsageTraceReader extends GoogleTraceReaderAbstract<
      *         to the given parameter
      */
     private UtilizationModel createUtilizationModel(final UtilizationModel source, final double initialUtilization){
-        if(source instanceof UtilizationModelDynamic){
-            return new UtilizationModelDynamic((UtilizationModelDynamic)source, initialUtilization);
+        if(source instanceof UtilizationModelDynamic umDynamic){
+            return new UtilizationModelDynamic(umDynamic, initialUtilization);
         }
 
         return new UtilizationModelDynamic(initialUtilization);

@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -45,10 +45,10 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * An simple example showing how to define datacenter resource utilization
+ * A simple example showing how to define datacenter resource utilization
  * and individual VM's costs ($).
- * It will create some VMs that will run some cloudlets.
- * Other VMs will just be idle all the time and
+ * It creates VMs that run some cloudlets.
+ * Some VMs will just be idle all the time and
  * other ones won't be created due to lack of available Hosts.
  *
  * @author Manoel Campos da Silva Filho
@@ -76,7 +76,7 @@ public class CostsExample1 {
     private static final int CLOUDLET_LENGTH = 100_000;
 
     private final CloudSim simulation;
-    private DatacenterBroker broker0;
+    private final DatacenterBroker broker0;
     private List<Vm> vmList;
     private List<Cloudlet> cloudletList;
     private Datacenter datacenter0;
@@ -92,11 +92,7 @@ public class CostsExample1 {
 
         simulation = new CloudSim();
         datacenter0 = createDatacenter();
-
-        //Creates a broker that is a software acting on behalf a cloud customer to manage his/her VMs and Cloudlets
-        broker0 = new DatacenterBrokerSimple(simulation);
-        //Destroys idle VMs after some time
-        broker0.setVmDestructionDelay(0.2);
+        broker0 = createBroker();
 
         vmList = createVms();
         broker0.submitVmList(vmList);
@@ -115,6 +111,18 @@ public class CostsExample1 {
         new CloudletsTableBuilder(finishedCloudlets).build();
 
         printTotalVmsCost();
+    }
+
+    /**
+     * Creates a broker which is a software acting on behalf a cloud customer to manage his/her VMs and Cloudlets.
+     * It disables VMs creation retry, this way, failed VMs will be just added to the {@link DatacenterBroker#getVmFailedList()}.
+     */
+    private DatacenterBroker createBroker() {
+        final DatacenterBroker broker = new DatacenterBrokerSimple(simulation);
+        //Destroys idle VMs after some time (in seconds)
+        broker.setVmDestructionDelay(0.2);
+        broker.setFailedVmsRetryDelay(-1);
+        return broker;
     }
 
     /**

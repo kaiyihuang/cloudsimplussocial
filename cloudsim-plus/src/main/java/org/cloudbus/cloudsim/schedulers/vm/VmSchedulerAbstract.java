@@ -35,7 +35,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
      * if one is not explicitly set.
      * @see #getVmMigrationCpuOverhead()
      */
-    public static final double DEFAULT_VM_MIGRATION_CPU_OVERHEAD = 0.1;
+    public static final double DEF_VM_MIGRATION_CPU_OVERHEAD = 0.1;
 
     /**
      * @see #getHost()
@@ -98,7 +98,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
 
         ((VmSocial)vm).setRequestedMips(new MipsShare(requestedMips));
         if(allocatePesForVmInternal(vm, requestedMips)) {
-            updateStatusOfHostPesUsedByVm(vm, getHost().getFreePeList(), Pe.Status.BUSY);
+            updateHostPesStatusToBusy(vm);
             return true;
         }
 
@@ -107,25 +107,21 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
 
     /**
      * Based on the number of PEs required by a given VM, sets the status of the same
-     * number of physical PEs in its Host to a given status.
-     *
-     * @param vm the VM to set its the status of its used physical PEs
-     * @param peList the list of physical PEs from which the corresponding virtual PEs will have the status changed
-     * @param newStatus the status to set
-     */
-    private void updateStatusOfHostPesUsedByVm(final Vm vm, final List<Pe> peList, final Pe.Status newStatus) {
-        updateStatusOfHostPesUsedByVm(peList, newStatus, vm.getNumberOfPes());
+     * number of physical PEs in its Host to BUSY.
+     * @param vm the VM to set the status of its used physical PEs
+     * */
+    private void updateHostPesStatusToBusy(final Vm vm) {
+        updateHostPesStatus(host.getFreePeList(), vm.getNumberOfPes(), Pe.Status.BUSY);
     }
 
     /**
      * Based on a specific number of virtual PEs, sets the status of the same
      * number of physical PEs in its Host to a given status.
-     *
      * @param peList the list of physical PEs from which the corresponding virtual PEs will have the status changed
-     * @param newStatus the status to set
      * @param vPesNumber the number of Virtual PEs that correspond to the number of physical PEs to have their status changed
+     * @param newStatus the status to set
      */
-    private void updateStatusOfHostPesUsedByVm(final List<Pe> peList, final Pe.Status newStatus, final long vPesNumber) {
+    private void updateHostPesStatus(final List<Pe> peList, final long vPesNumber, final Pe.Status newStatus) {
         if(vPesNumber <= 0) {
             return;
         }
@@ -157,8 +153,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
      * @param removedPes number of PEs actually removed from the VM
      */
     private void updateHostUsedPesToFree(final long removedPes) {
-        final List<Pe> busyPeList = host.getBusyPeList();
-        updateStatusOfHostPesUsedByVm(busyPeList, Pe.Status.FREE, removedPes);
+        updateHostPesStatus(host.getBusyPeList(), removedPes, Pe.Status.FREE);
     }
 
     /**
@@ -355,7 +350,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
      * @return
      */
     private boolean isOtherHostAssigned(final Host host) {
-        /*It'se used != instead of !equals() because when a VmScheduler is set to a Host,
+        /*It's used != instead of !equals() because when a VmScheduler is set to a Host,
         * the Host may not have an ID yet.
         * That may happen when the Host is created without an id,
         * which is set only when the Host list is assigned to a Datacenter. */

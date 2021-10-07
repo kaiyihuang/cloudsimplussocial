@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -23,9 +23,9 @@
  */
 package org.cloudsimplus.traces.google;
 
-import org.cloudsimplus.traces.google.GoogleMachineEventsTraceReader.FieldIndex;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -41,9 +41,11 @@ public class GoogleMachineEventsTraceReaderTest {
      */
     @Test
     public void testEventType(){
-        assertEquals(0, MachineEventType.ADD.ordinal());
-        assertEquals(1, MachineEventType.REMOVE.ordinal());
-        assertEquals(2, MachineEventType.UPDATE.ordinal());
+        assertAll(
+            () -> assertEquals(0, MachineEventType.ADD.ordinal()),
+            () -> assertEquals(1, MachineEventType.REMOVE.ordinal()),
+            () -> assertEquals(2, MachineEventType.UPDATE.ordinal())
+        );
     }
 
     /**
@@ -53,12 +55,14 @@ public class GoogleMachineEventsTraceReaderTest {
      */
     @Test
     public void testFieldIndex(){
-        assertEquals(0, FieldIndex.TIMESTAMP.ordinal());
-        assertEquals(1, FieldIndex.MACHINE_ID.ordinal());
-        assertEquals(2, FieldIndex.EVENT_TYPE.ordinal());
-        assertEquals(3, FieldIndex.PLATFORM_ID.ordinal());
-        assertEquals(4, FieldIndex.CPU_CAPACITY.ordinal());
-        assertEquals(5, FieldIndex.RAM_CAPACITY.ordinal());
+        assertAll(
+            () -> assertEquals(0, MachineEventField.TIMESTAMP.ordinal()),
+            () -> assertEquals(1, MachineEventField.MACHINE_ID.ordinal()),
+            () -> assertEquals(2, MachineEventField.EVENT_TYPE.ordinal()),
+            () -> assertEquals(3, MachineEventField.PLATFORM_ID.ordinal()),
+            () -> assertEquals(4, MachineEventField.CPU_CAPACITY.ordinal()),
+            () -> assertEquals(5, MachineEventField.RAM_CAPACITY.ordinal())
+        );
     }
 
 }

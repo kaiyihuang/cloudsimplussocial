@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -29,6 +29,9 @@ import org.cloudbus.cloudsim.vms.Vm;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.groupingBy;
+
 /**
  * A possible solution for mapping a set of Cloudlets to a set of Vm's.
  * It represents a solution generated using a {@link Heuristic} implementation.
@@ -40,7 +43,8 @@ import java.util.stream.Collectors;
 public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudlet, Vm>> {
     /**
      * When two double values are subtracted to check if they are equal zero,
-     * there may be some precision issues. This value is used to check the absolute difference between the two values
+     * there may be some precision issues. This value is used to check the absolute
+     * difference between the two values
      * to avoid that solutions with little decimal difference be
      * considered different one of the other.
      */
@@ -82,7 +86,7 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
     }
 
     private CloudletToVmMappingSolution(final Heuristic heuristic, final Map<Cloudlet, Vm> cloudletVmMap){
-        this.heuristic = heuristic;
+        this.heuristic = requireNonNull(heuristic);
         this.cloudletVmMap = cloudletVmMap;
     }
 
@@ -92,7 +96,7 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
      * @param solution the solution to be cloned
      */
     public CloudletToVmMappingSolution(final CloudletToVmMappingSolution solution){
-        this(solution.heuristic, new HashMap<>(solution.cloudletVmMap));
+        this(requireNonNull(solution).heuristic, new HashMap<>(solution.cloudletVmMap));
         this.recomputeCost = solution.recomputeCost;
         this.lastCost = solution.lastCost;
         this.cloudletVmMap.putAll(solution.cloudletVmMap);
@@ -105,7 +109,7 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
      * @param vm the Vm to assign a cloudlet to
      */
     public void bindCloudletToVm(final Cloudlet cloudlet, final Vm vm){
-        cloudletVmMap.put(cloudlet, vm);
+        cloudletVmMap.put(requireNonNull(cloudlet), requireNonNull(vm));
         recomputeCost = true;
     }
 
@@ -115,12 +119,10 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
     }
 
     private void recomputeCostIfRequested() {
-        if(!this.recomputeCost) {
-            return;
+        if (this.recomputeCost) {
+            this.lastCost = computeCostOfAllVms();
+            this.recomputeCost = false;
         }
-
-        this.lastCost = computeCostOfAllVms();
-        this.recomputeCost = false;
     }
 
     private double computeCostOfAllVms() {
@@ -138,13 +140,14 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
      * @return
      */
     private Map<Vm, List<Map.Entry<Cloudlet, Vm>>> groupCloudletsByVm() {
-        return cloudletVmMap.entrySet().stream()
-            .collect(Collectors.groupingBy(Map.Entry::getValue));
+        return cloudletVmMap
+                .entrySet()
+                .stream()
+                .collect(groupingBy(Map.Entry::getValue));
     }
 
     /**
      * {@inheritDoc}
-     *
      * It computes the cost of the entire mapping between Vm's and Cloudlets.
      *
      * @return {@inheritDoc}
@@ -178,8 +181,8 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
      */
     public double getVmCost(final Map.Entry<Vm, List<Map.Entry<Cloudlet, Vm>>> entry) {
         final Vm vm = entry.getKey();
-        final List<Cloudlet> cloudlets = convertListOfMapEntriesToListOfCloudlets(entry.getValue());
-        return getVmCost(vm, cloudlets);
+        final var cloudletList = convertListOfMapEntriesToListOfCloudlets(entry.getValue());
+        return getVmCost(vm, cloudletList);
     }
 
     /**
@@ -209,9 +212,9 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
      */
     private long getTotalCloudletsPes(final List<Cloudlet> listOfCloudletsForVm) {
         return listOfCloudletsForVm
-            .stream()
-            .mapToLong(Cloudlet::getNumberOfPes)
-            .sum();
+                .stream()
+                .mapToLong(Cloudlet::getNumberOfPes)
+                .sum();
     }
 
     /**
@@ -227,12 +230,11 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
     @Override
     public int compareTo(final HeuristicSolution solution) {
         final double diff = this.getCost() - solution.getCost();
-
         if(Math.abs(diff) <= MIN_DIFF) {
             return 0;
         }
 
-        return (diff > 0 ? -1 : 1);
+        return diff > 0 ? -1 : 1;
     }
 
     /**
@@ -315,10 +317,11 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
      *         or an empty List in case no entry is found.
      */
     private List<Map.Entry<Cloudlet, Vm>> createListWithFirstMapEntry() {
-        return cloudletVmMap.entrySet()
-            .stream()
-            .limit(1)
-            .collect(Collectors.toList());
+        return cloudletVmMap
+                .entrySet()
+                .stream()
+                .limit(1)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -330,12 +333,11 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
      */
     private List<Map.Entry<Cloudlet, Vm>> createListWithTwoRandomEntries() {
         final int size = cloudletVmMap.entrySet().size();
-
         final int firstIdx = heuristic.getRandomValue(size);
         final int secondIdx = heuristic.getRandomValue(size);
 
         final List<Map.Entry<Cloudlet, Vm>> selected = new ArrayList<>(2);
-        final Iterator<Map.Entry<Cloudlet, Vm>> it = cloudletVmMap.entrySet().iterator();
+        final var entryIterator = cloudletVmMap.entrySet().iterator();
 
         /*
         Loop over the entries until those ones defined by the first and second index
@@ -345,8 +347,8 @@ public class CloudletToVmMappingSolution implements HeuristicSolution<Map<Cloudl
         until finding the required entries, without creating
         a List with all entries in order to get just two of them.
         */
-        for(int i = 0; selected.size() < 2 && it.hasNext(); i++){
-            final Map.Entry<Cloudlet, Vm> solution = it.next();
+        for(int i = 0; selected.size() < 2 && entryIterator.hasNext(); i++){
+            final Map.Entry<Cloudlet, Vm> solution = entryIterator.next();
             if(i == firstIdx || i == secondIdx){
                 selected.add(solution);
             }

@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -24,14 +24,11 @@
 package org.cloudsimplus.traces.google;
 
 import org.cloudbus.cloudsim.brokers.DatacenterBroker;
-import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple;
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.CloudSimTags;
-import org.cloudbus.cloudsim.core.Simulation;
 import org.cloudbus.cloudsim.core.events.CloudSimEvent;
 import org.cloudbus.cloudsim.util.ResourceLoader;
-import org.cloudbus.cloudsim.util.TimeUtil;
 import org.cloudbus.cloudsim.util.TraceReaderAbstract;
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic;
 
@@ -42,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
@@ -71,230 +67,6 @@ import static java.util.Objects.requireNonNull;
  * @since CloudSim Plus 4.0.0
  */
 public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloudlet> {
-    /** @see #getMaxCloudletsToCreate() */
-    private int maxCloudletsToCreate;
-
-    /** @see #setAutoSubmitCloudlets(boolean) */
-    private boolean autoSubmitCloudlets;
-
-    /**
-     * Defines the type of information missing in the trace file.
-     * It represents the possible values for the MISSING_INFO field.
-     */
-    public enum MissingInfo {
-        /**
-         * 0: Means Google Clusters did not find a record representing the given event,
-         * but a later snapshot of the job or task state indicated that the transition must have occurred.
-         * The timestamp of the synthesized event is the timestamp of the snapshot.
-         */
-        SNAPSHOT_BUT_NO_TRANSITION,
-
-        /**
-         * 1: Means Google Clusters did not find a record representing the given termination event,
-         * but the job or task disappeared from later snapshots of cluster states,
-         * so it must have been terminated.
-         * The timestamp of the synthesized event is a pessimistic upper bound on its
-         * actual termination time assuming it could have legitimately been missing from one snapshot.
-         */
-        NO_SNAPSHOT_OR_TRANSITION,
-
-        /**
-         * 2: Means Google Clusters did not find a record representing the creation of the given task or job.
-         * In this case, we may be missing metadata (job name, resource requests, etc.)
-         * about the job or task and we may have placed SCHEDULE or SUBMIT events latter than they actually are.
-         */
-        EXISTS_BUT_NO_CREATION
-    }
-
-    /**
-     * The index of each field in the trace file.
-     */
-    public enum FieldIndex implements TraceField<GoogleTaskEventsTraceReader> {
-        /**
-         * 0: The index of the field containing the time the event happened (stored in microsecond
-         * but converted to seconds when read from the file).
-         */
-        TIMESTAMP{
-            /**
-             * Gets the timestamp converted to seconds.
-             * @param reader the reader for the trace file
-             * @return
-             */
-            @Override
-            public Double getValue(final GoogleTaskEventsTraceReader reader) {
-                return TimeUtil.microToSeconds(reader.getFieldDoubleValue(this));
-            }
-        },
-
-        /**
-         * 1: When it seems Google Cluster is missing an event record, it's synthesized a replacement.
-         * Similarly, we look for a record of every job or task that is active at the end of the trace time window,
-         * and synthesize a missing record if we don't find one.
-         * Synthesized records have a number (called the "missing info" field)
-         * to represent why they were added to the trace, according to {@link MissingInfo} values.
-         *
-         * <p>When there is no info missing, the field is empty in the trace.
-         * In this case, -1 is returned instead.</p>
-         */
-        MISSING_INFO{
-            @Override
-            public Integer getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldIntValue(this, -1);
-            }
-        },
-
-        /**
-         * 2: The index of the field containing the id of the job this task belongs to.
-         */
-        JOB_ID{
-            @Override
-            public Long getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldLongValue(this);
-            }
-        },
-
-        /**
-         * 3: The index of the field containing the task index within the job.
-         */
-        TASK_INDEX{
-            @Override
-            public Long getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldLongValue(this);
-            }
-        },
-
-        /**
-         * 4: The index of the field containing the machineID.
-         * If the field is present, indicates the machine onto which the task was scheduled,
-         * otherwise, the reader will return -1 as default value.
-         */
-        MACHINE_ID{
-            @Override
-            public Long getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldLongValue(this, -1);
-            }
-        },
-
-        /**
-         * 5: The index of the field containing the type of event.
-         * The possible values for this field are the ordinal values of the enum {@link TaskEventType}.
-         */
-        EVENT_TYPE{
-            @Override
-            public Integer getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldIntValue(this);
-            }
-        },
-
-        /**
-         * 6: The index of the field containing the hashed username provided as an opaque base64-encoded string that can be tested for equality.
-         * For each distinct username, a corresponding {@link DatacenterBroker} is created.
-         */
-        USERNAME{
-            @Override
-            public String getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldValue(this);
-            }
-        },
-
-        /**
-         * 7: All jobs and tasks have a scheduling class ​that roughly represents how latency-sensitive it is.
-         * The scheduling class is represented by a single number,
-         * with 3 representing a more latency-sensitive task (e.g., serving revenue-generating user requests)
-         * and 0 representing a non-production task (e.g., development, non-business-critical analyses, etc.).
-         * Note that scheduling  class is n​ot a priority, although more latency-sensitive tasks tend to have higher task priorities.
-         * Scheduling class affects machine-local policy for resource access.
-         * Priority determines whether a task is scheduled on a machine.
-         *
-         * <p><b>WARNING</b>: Currently, this field is totally ignored by CloudSim Plus.</p>
-         */
-        SCHEDULING_CLASS{
-            @Override
-            public Integer getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldIntValue(this);
-            }
-        },
-
-        /**
-         * 8: Each task has a priority, a​ small integer that is mapped here into a sorted set of values,
-         * with 0 as the lowest priority (least important).
-         * Tasks with larger priority numbers generally get preference for resources
-         * over tasks with smaller priority numbers.
-         *
-         * <p>There are some special priority ranges:
-         * <ul>
-         * <li><b>"free" priorities</b>: these are the lowest priorities.
-         * Resources requested at these priorities incur little internal charging.</li>
-         * <li><b>"production" priorities</b>: these are the highest priorities.
-         * The cluster scheduler attempts to prevent latency-sensitive tasks at
-         * these priorities from being evicted due to over-allocation of machine resources.</li>
-         * <li><b>"monitoring" priorities</b>: these priorities are intended for jobs
-         * which monitor the health of other, lower-priority jobs</li>
-         * </ul>
-         * </p>
-         */
-        PRIORITY{
-            @Override
-            public Integer getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldIntValue(this);
-            }
-        },
-
-        /**
-         * 9: The index of the field containing the maximum number of CPU cores
-         * the task is permitted to use (in percentage from 0 to 1).
-         *
-         * <p>When there is no value for the field, 0 is returned instead.</p>
-         */
-        RESOURCE_REQUEST_FOR_CPU_CORES{
-            @Override
-            public Double getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldDoubleValue(this, 0);
-            }
-        },
-
-        /**
-         * 10: The index of the field containing the maximum amount of RAM
-         * the task is permitted to use (in percentage from 0 to 1).
-         *
-         * <p>When there is no value for the field, 0 is returned instead.</p>
-         */
-        RESOURCE_REQUEST_FOR_RAM{
-            @Override
-            public Double getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldDoubleValue(this, 0);
-            }
-        },
-
-        /**
-         * 11: The index of the field containing the maximum amount of local disk space
-         * the task is permitted to use (in percentage from 0 to 1).
-         *
-         * <p>When there is no value for the field, 0 is returned instead.</p>
-         */
-        RESOURCE_REQUEST_FOR_LOCAL_DISK_SPACE{
-            @Override
-            public Double getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldDoubleValue(this, 0);
-            }
-        },
-
-        /**
-         * 12: If the different-machine constraint​ field is present, and true (1),
-         * it indicates that a task must be scheduled to execute on a
-         * different machine than any other currently running task in the job.
-         * It is a special type of constraint.
-         *
-         * <p>When there is no value for the field, -1 is returned instead.</p>
-         */
-        DIFFERENT_MACHINE_CONSTRAINT{
-            @Override
-            public Integer getValue(final GoogleTaskEventsTraceReader reader) {
-                return reader.getFieldIntValue(this, -1);
-            }
-        }
-    }
-
     /**
      * List of messages to send to the {@link DatacenterBroker} that owns each created Cloudlet.
      * Such events request a Cloudlet's status change or attributes change.
@@ -302,25 +74,19 @@ public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloud
      */
     protected final Map<Cloudlet, List<CloudSimEvent>> cloudletEvents;
 
+    /** @see #getBrokerManager() */
+    private final BrokerManager brokerManager;
+
+    /** @see #getMaxCloudletsToCreate() */
+    private int maxCloudletsToCreate;
+
+    /** @see #setAutoSubmitCloudlets(boolean) */
+    private boolean autoSubmitCloudlets;
+
     /**
      * @see #setCloudletCreationFunction(Function)
      */
     private Function<TaskEvent, Cloudlet> cloudletCreationFunction;
-
-    /**
-     * A default broker to be used by all created Cloudlets.
-     * @see #setDefaultBroker(DatacenterBroker)
-     * @see #brokersMap
-     */
-    private DatacenterBroker defaultBroker;
-
-    /**
-     * A map of brokers created according to the username from the trace file,
-     * representing a customer. Each key is the username field and the value the created broker.
-     * If a default {@link #defaultBroker} is set, the map is empty.
-     * @see #getBrokers()
-     */
-    private final Map<String, DatacenterBroker> brokersMap;
 
     private final CloudSim simulation;
 
@@ -395,8 +161,8 @@ public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloud
         this.simulation = requireNonNull(simulation);
         this.cloudletCreationFunction = requireNonNull(cloudletCreationFunction);
         this.autoSubmitCloudlets = true;
-        brokersMap = new HashMap<>();
-        cloudletEvents = new HashMap<>();
+        this.cloudletEvents = new HashMap<>();
+        this.brokerManager = new BrokerManager(this);
         setMaxCloudletsToCreate(Integer.MAX_VALUE);
     }
 
@@ -410,7 +176,7 @@ public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloud
      * </p>
      *
      * @return the Set of all submitted {@link Cloudlet}s for any timestamp inside the trace file.
-     * @see #getBrokers()
+     * @see BrokerManager#getBrokers()
      */
     @Override
     public final Collection<Cloudlet> process() {
@@ -444,38 +210,8 @@ public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloud
 
     @Override
     protected boolean processParsedLineInternal() {
-        return getEventType().process(this);
-    }
-
-    /**
-     * Gets the enum value that represents the event type of the current trace line.
-     *
-     * @return the {@link MachineEventType} value
-     */
-    private TaskEventType getEventType() {
-        return TaskEventType.getValue(FieldIndex.EVENT_TYPE.getValue(this));
-    }
-
-    protected TaskEvent createTaskEventFromTraceLine() {
-        final TaskEvent event = new TaskEvent();
-        /*@TODO The tasks with the same username must run inside the same user's VM,
-        *       unless the machineID is different.
-        *       The task (cloudlet) needs to be mapped to a specific Host (according to the machineID).
-        *       The challenge here is because the task requirements are usually not known,
-        *       for instance when the task is submitted. It's just know when it starts to execute.
-        */
-        event
-            .setType(FieldIndex.EVENT_TYPE.getValue(this))
-            .setTimestamp(FieldIndex.TIMESTAMP.getValue(this))
-            .setResourceRequestForCpuCores(FieldIndex.RESOURCE_REQUEST_FOR_CPU_CORES.getValue(this))
-            .setResourceRequestForLocalDiskSpace(FieldIndex.RESOURCE_REQUEST_FOR_LOCAL_DISK_SPACE.getValue(this))
-            .setResourceRequestForRam(FieldIndex.RESOURCE_REQUEST_FOR_RAM.getValue(this))
-            .setPriority(FieldIndex.PRIORITY.getValue(this))
-            .setSchedulingClass(FieldIndex.SCHEDULING_CLASS.getValue(this))
-            .setUserName(FieldIndex.USERNAME.getValue(this))
-            .setJobId(FieldIndex.JOB_ID.getValue(this))
-            .setTaskIndex(FieldIndex.TASK_INDEX.getValue(this));
-        return event;
+        final var eventType = TaskEventType.of(this);
+        return eventType.process(this);
     }
 
     /**
@@ -485,8 +221,8 @@ public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloud
      * @return true if the request was created, false otherwise
      */
     /* default */ boolean requestCloudletStatusChange(final int tag) {
-        final TaskEvent taskEvent = createTaskEventFromTraceLine();
-        final DatacenterBroker broker = getBroker(taskEvent.getUserName());
+        final TaskEvent taskEvent = TaskEvent.of(this);
+        final DatacenterBroker broker = brokerManager.getBroker(taskEvent.getUserName());
         final double delay = taskEvent.getTimestamp();
 
         return findObject(taskEvent.getUniqueTaskId())
@@ -640,7 +376,7 @@ public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloud
      * The {@link Function} will receive a {@link TaskEvent} object containing
      * the task data read from the trace and should the created Cloudlet.
      * The provided function must instantiate the Host and defines Host's CPU cores and RAM
-     * capacity according the the received parameters.
+     * capacity according the received parameters.
      * For other Hosts configurations (such as storage capacity), the provided
      * function must define the value as desired, since the trace file
      * doesn't have any other information for such resources.
@@ -651,77 +387,7 @@ public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloud
         this.cloudletCreationFunction = requireNonNull(cloudletCreationFunction);
     }
 
-    /**
-     * Gets the List of brokers created according to the username from the trace file,
-     * representing a customer.
-     * @return
-     * @see #setDefaultBroker(DatacenterBroker)
-     */
-    public List<DatacenterBroker> getBrokers() {
-        return defaultBroker == null ? new ArrayList<>(brokersMap.values()) : Collections.singletonList(defaultBroker);
-    }
-
-    /**
-     * Defines a default broker to will be used for all created Cloudlets.
-     * This way, the username field inside the trace file won't be used
-     * to dynamically create brokers.
-     * The {@link #getBrokers()} will only return an unitary list containing this broker.
-     *
-     * @param broker the broker for all created cloudlets, representing a single username (customer)
-     * @return
-     */
-    public GoogleTaskEventsTraceReader setDefaultBroker(final DatacenterBroker broker) {
-        this.defaultBroker = Objects.requireNonNull(broker);
-        brokersMap.clear();
-        return this;
-    }
-
-    /**
-     * Gets a {@link #setDefaultBroker(DatacenterBroker) default broker (if ones was set)}
-     * or the one with the specified username (creating it if not yet).
-     * @param username the username of the broker
-     * @return (i) an already existing broker with the given username or a new one if not created yet;
-     *         (ii) the default broker if one was set.
-     */
-    protected DatacenterBroker getOrCreateBroker(final String username){
-        return getBroker(() -> brokersMap.computeIfAbsent(username, this::createBroker));
-    }
-
-    private DatacenterBroker createBroker(final String username) {
-        return new DatacenterBrokerSimple(simulation, "Broker_"+username);
-    }
-
-    /**
-     * Gets an {@link DatacenterBroker} instance represented by a given username.
-     * If a {@link #setDefaultBroker(DatacenterBroker) default broker was set to be used for all created Cloudlets},
-     * that one is returned, ignoring the username given.
-     *
-     * @param username the name of the user read from a trace line
-     * @return the {@link DatacenterBroker} instance for the given username or the default broker (if it was set)
-     */
-    private DatacenterBroker getBroker(final String username){
-        return getBroker(() -> brokersMap.get(username));
-    }
-
-    /**
-     * Gets the default broker or the one returned by the provided supplier
-     * @param supplier a broker {@link Supplier} Function.
-     * @return
-     */
-    private DatacenterBroker getBroker(final Supplier<DatacenterBroker> supplier){
-        return defaultBroker == null ? supplier.get() : defaultBroker;
-    }
-
-    /**
-     * Gets an {@link DatacenterBroker} instance representing the username from the last trace line read.
-     * @return the {@link DatacenterBroker} instance
-     */
-    protected DatacenterBroker getBroker(){
-        final String value = FieldIndex.USERNAME.getValue(this);
-        return getBroker(value);
-    }
-
-    public Simulation getSimulation() {
+    public CloudSim getSimulation() {
         return simulation;
     }
 
@@ -780,5 +446,14 @@ public class GoogleTaskEventsTraceReader extends GoogleTraceReaderAbstract<Cloud
     public GoogleTaskEventsTraceReader setAutoSubmitCloudlets(final boolean autoSubmitCloudlets) {
         this.autoSubmitCloudlets = autoSubmitCloudlets;
         return this;
+    }
+
+    /**
+     * Gets the manager that creates and provide access to {@link DatacenterBroker}s used by
+     * the trace reader.
+     * @return
+     */
+    public BrokerManager getBrokerManager() {
+        return brokerManager;
     }
 }

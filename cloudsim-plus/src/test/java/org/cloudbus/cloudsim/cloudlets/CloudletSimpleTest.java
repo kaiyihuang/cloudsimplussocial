@@ -16,7 +16,6 @@ import org.cloudbus.cloudsim.utilizationmodels.UtilizationModel;
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelStochastic;
 import org.cloudsimplus.listeners.CloudletVmEventInfo;
 import org.cloudsimplus.listeners.EventListener;
-import org.easymock.EasyMock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,8 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @since	CloudSim Toolkit 2.0
  */
 public class CloudletSimpleTest {
-
-    public static final int PES_NUMBER = 2;
+    static final int PES_NUMBER = 2;
 
     private CloudletSimple cloudlet;
     private UtilizationModel utilizationModelCpu;
@@ -132,7 +130,8 @@ public class CloudletSimpleTest {
 
     @Test
     public void testGetActualCPUTime() {
-        final double submissionTime = 0, execStartTime = 10;
+        final double submissionTime = 0;
+        final double execStartTime = 10;
         final double simulationClock = 100;
         final double actualCpuTime = simulationClock - execStartTime;
 
@@ -150,17 +149,16 @@ public class CloudletSimpleTest {
         cloudlet.setExecStartTime(execStartTime);
         cloudlet.setStatus(Cloudlet.Status.SUCCESS);
         assertEquals(actualCpuTime, cloudlet.getActualCpuTime());
-
-        EasyMock.verify(cloudsim);
     }
 
     @Test
     public void testGetProcessingCost() {
-        final double costPerCpuSec = 4, costPerByteOfBw = 2;
+        final double costPerCpuSec = 4;
+        final double costPerByteOfBw = 2;
         final Datacenter dc = DatacenterMocker.createMock(mocker -> {
-            mocker.getCharacteristics().times(2);
-            mocker.getCostPerSecond(costPerCpuSec).once();
-            mocker.getCostPerBw(costPerByteOfBw).once();
+            mocker.getCharacteristics();
+            mocker.getCostPerSecond(costPerCpuSec);
+            mocker.getCostPerBw(costPerByteOfBw);
         });
 
         final Cloudlet cloudlet = CloudletTestUtil.createCloudlet(0, 10000, 2);
@@ -268,24 +266,17 @@ public class CloudletSimpleTest {
 
     @Test
     public void testSetNetServiceLevel() {
-        int valid = 1;
-        final String trueMsg = "Cloudlet.setNetServiceLevel should return true";
-        final String falseMsg = "Cloudlet.setNetServiceLevel should return false";
+        final int valid0 = 0;
+        cloudlet.setNetServiceLevel(valid0);
+        assertEquals(valid0, cloudlet.getNetServiceLevel());
 
-        assertTrue(cloudlet.setNetServiceLevel(valid), trueMsg);
-        assertEquals(valid, cloudlet.getNetServiceLevel());
-
-        final int invalid0 = 0;
-        assertFalse(cloudlet.setNetServiceLevel(invalid0), falseMsg);
-        assertEquals(valid, cloudlet.getNetServiceLevel());
+        final int valid1 = 1;
+        cloudlet.setNetServiceLevel(valid1);
+        assertEquals(valid1, cloudlet.getNetServiceLevel());
 
         final int invalidNegative = -1;
-        assertFalse(cloudlet.setNetServiceLevel(invalidNegative), falseMsg);
-        assertEquals(valid, cloudlet.getNetServiceLevel());
-
-        valid = 2;
-        assertTrue(cloudlet.setNetServiceLevel(valid), trueMsg);
-        assertEquals(valid, cloudlet.getNetServiceLevel());
+        assertThrows(IllegalArgumentException.class, () -> cloudlet.setNetServiceLevel(invalidNegative));
+        assertEquals(valid1, cloudlet.getNetServiceLevel());
     }
 
     @Test

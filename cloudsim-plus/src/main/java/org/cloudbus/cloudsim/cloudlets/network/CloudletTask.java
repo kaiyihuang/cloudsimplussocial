@@ -12,7 +12,7 @@ import org.cloudbus.cloudsim.cloudlets.CloudletExecution;
 import org.cloudbus.cloudsim.core.Identifiable;
 
 /**
- * Represents one of many tasks that can be executed by a {@link NetworkCloudlet}.
+ * An abstract class to be implemented by tasks that can be executed by a {@link NetworkCloudlet}.
  *
  * <p>Please refer to following publication for more details:
  * <ul>
@@ -30,35 +30,25 @@ import org.cloudbus.cloudsim.core.Identifiable;
  * @author Saurabh Kumar Garg
  * @since CloudSim Toolkit 1.0
  *
- * @TODO Classes {@link CloudletTask}, {@link Cloudlet}
+ * TODO Classes {@link CloudletTask}, {@link Cloudlet}
  * and {@link CloudletExecution} share a common set of attributes that would be defined by a common interface.
  */
 public abstract class CloudletTask implements Identifiable {
     private boolean finished;
 
-    /**
-     * @see #getId()
-     */
+    /** @see #getId() */
     private long id;
 
-    /**
-     * @see #getStartTime()
-     */
+    /** @see #getStartTime() */
     private double startTime;
 
-    /**
-     * @see #getFinishTime()
-     */
+    /** @see #getFinishTime() */
     private double finishTime;
 
-    /**
-     * @see #getMemory()
-     */
+    /** @see #getMemory() */
     private long memory;
 
-    /**
-     * @see #getCloudlet()
-     */
+    /** @see #getCloudlet() */
     private NetworkCloudlet cloudlet;
 
     /**
@@ -74,7 +64,7 @@ public abstract class CloudletTask implements Identifiable {
     }
 
     /**
-     * Gets the id of the CloudletTask.
+     * Gets the id of the task.
      * @return
      */
     @Override
@@ -83,7 +73,7 @@ public abstract class CloudletTask implements Identifiable {
     }
 
     /**
-     * Sets the id of the CloudletTask.
+     * Sets the id of the task.
      * @param id the ID to set
      */
     public CloudletTask setId(final int id) {
@@ -92,7 +82,7 @@ public abstract class CloudletTask implements Identifiable {
     }
 
     /**
-     * Gets the memory amount used by the task.
+     * Gets the memory amount used by the task (in Megabytes).
      * @return
      */
     public long getMemory() {
@@ -100,7 +90,7 @@ public abstract class CloudletTask implements Identifiable {
     }
 
     /**
-     * Sets the memory amount used by the task.
+     * Sets the memory amount used by the task (in Megabytes).
      * @param memory the memory amount to set
      */
     public CloudletTask setMemory(final long memory) {
@@ -109,15 +99,14 @@ public abstract class CloudletTask implements Identifiable {
     }
 
     /**
-     *
-     * @return the time the task started executing, or -1 if not started yet.
+     * @return the time the task started executing (in seconds), or -1 if not started yet.
      */
     public double getStartTime() {
         return startTime;
     }
 
     /**
-     * Sets the time the task started executing.
+     * Sets the time the task started executing (in seconds).
      * @param startTime the start time to set
      */
     public CloudletTask setStartTime(final double startTime) {
@@ -139,7 +128,7 @@ public abstract class CloudletTask implements Identifiable {
     }
 
     /**
-     * Indicates if the task is finished or not.
+     * Checks if the task is finished or not.
      *
      * @return true if the task has finished, false otherwise
      * @see #isActive()
@@ -149,7 +138,7 @@ public abstract class CloudletTask implements Identifiable {
     }
 
     /**
-     * Indicates if the task is active (it's not finished).
+     * Checks if the task is active (it's not finished).
      *
      * @return true if the task is active, false otherwise
      * @see #isFinished()
@@ -177,16 +166,14 @@ public abstract class CloudletTask implements Identifiable {
     }
 
     /**
-     *
-     * @return the time the task spent executing, or -1 if not finished yet
+     * @return the time the task spent executing (in seconds), or -1 if not finished yet
      */
     public double getExecutionTime(){
         return finished ? finishTime - startTime : -1;
     }
 
     /**
-     *
-     * @return the time the task finished or -1 if not finished yet.
+     * @return the time the task finished (in seconds) or -1 if not finished yet.
      */
     public double getFinishTime() {
         return finishTime;

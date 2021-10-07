@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -562,8 +562,8 @@ final class HostFaultInjectionExperiment extends Experiment {
 
         System.out.println("Percentage of Brokers meeting the Availability Metric in SLA: " + exp.getPercentageOfAvailabilityMeetingSla() * 100);
         System.out.println("# Ratio VMS per HOST: " + exp.getRatioVmsPerHost());
-        System.out.printf("%n# Number of Host faults: %d%n", exp.getFaultInjection().getNumberOfHostFaults());
-        System.out.println("# Number of VM faults (VMs destroyed): " + exp.getFaultInjection().getNumberOfFaults());
+        System.out.printf("%n# Number of Host faults: %d%n", exp.getFaultInjection().getHostFaultsNumber());
+        System.out.println("# Number of VM faults (VMs destroyed): " + exp.getFaultInjection().getTotalFaultsNumber());
         System.out.printf("# VMs MTBF average: %.2f minutes%n", exp.getFaultInjection().meanTimeBetweenVmFaultsInMinutes());
         System.out.printf("# Time the simulations finished: %.2f minutes%n", exp.getSimulation().clockInMinutes());
         System.out.printf("# Hosts MTBF: %.2f minutes%n", exp.getFaultInjection().meanTimeBetweenHostFaultsInMinutes());

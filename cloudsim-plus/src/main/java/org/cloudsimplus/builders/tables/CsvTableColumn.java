@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -70,7 +70,6 @@ public class CsvTableColumn extends AbstractTableColumn {
         return String.format(DATA_COL_SEPARATOR_FORMAT, super.generateData(data), getTable().getColumnSeparator());
     }
 
-
     /**
      * Align a string to the right side, based on the length of the title
      * header of the column.
@@ -78,7 +77,11 @@ public class CsvTableColumn extends AbstractTableColumn {
      * @return the aligned string
      */
     protected String alignStringRight(final String str) {
-        final String fmt = String.format("%%%ds", generateTitleHeader().length());
+        return alignStringRight(str, generateTitleHeader().length());
+    }
+
+    public static String alignStringRight(final String str, final int size) {
+        final String fmt = String.format("%%%ds", size);
         return String.format(fmt, str);
     }
 }

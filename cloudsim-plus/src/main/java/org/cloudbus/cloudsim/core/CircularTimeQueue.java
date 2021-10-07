@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -29,15 +29,15 @@ import java.util.function.Consumer;
 
 /**
  * A static-sized queue that removes the oldest time value when it's full.
- * It keeps track of the last two simulation events time to check whether they happened at different times,
- * meaning the simulation clock has changed
+ * It keeps track of the last two simulation events time to check whether
+ * they happened at different times, meaning the simulation clock has changed
  * and the simulation Clock Tick Listeners are fired
  *
  * @since CloudSim Plus 6.0.0
  * @author Manoel Campos da Silva Filho
  * @see Simulation#addOnClockTickListener(EventListener)
  */
-class CircularTimeQueue {
+final class CircularTimeQueue {
     /**
      * The simulation clock time queue.
      * It's an array that works as a circular queue with capacity for just 2 elements
@@ -48,16 +48,14 @@ class CircularTimeQueue {
      * the simulation clock has increased.
      *
      * <p>The head (value at index 0) of the queue is the oldest simulation time stored,
-     * the tail (value at index 1) is the newest one.</p>
-     *
-     * <p>Such a structure is required because multiple events
+     * the tail (value at index 1) is the newest one.
+     * Such a structure is required because multiple events
      * can be received consecutively for the same simulation time.
      * When the head of the queue is lower than the tail,
      * it means the last event for that head time
      * was already processed and a more recent event
      * has just arrived.
      * </p>
-     *
      */
     private final double[] queue;
     private final Simulation simulation;
@@ -72,7 +70,7 @@ class CircularTimeQueue {
      * Creates the time queue.
      * @param simulation the simulation instance.
      */
-    public CircularTimeQueue(final Simulation simulation){
+    CircularTimeQueue(final Simulation simulation){
         this.simulation = simulation;
         this.lastClockTickUpdate = simulation.getMinTimeBetweenEvents();
         this.queue = new double[]{lastClockTickUpdate, lastClockTickUpdate};
@@ -89,7 +87,7 @@ class CircularTimeQueue {
      * @param notifyClockTickListeners a {@link Consumer} that will receive the <b>previous clock time</b>
      *                                and update the listeners for that time.
      */
-    public void tryToUpdateListeners(final Consumer<Double> notifyClockTickListeners) {
+    void tryToUpdateListeners(final Consumer<Double> notifyClockTickListeners) {
         if(!isTimeToUpdateClockTickListeners()) {
             return;
         }

@@ -6,7 +6,6 @@ import org.cloudbus.cloudsim.core.Simulation;
 import org.cloudbus.cloudsim.core.events.SimEvent;
 import org.cloudbus.cloudsim.power.models.PowerModel;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +36,7 @@ public class PowerMeter extends CloudSimEntity {
      * @param powerAwareEntity an entity to have its power consumption measured
      */
     public PowerMeter(final Simulation simulation, final PowerAware<? extends PowerModel> powerAwareEntity) {
-        this(simulation, Arrays.asList(powerAwareEntity));
+        this(simulation, List.of(powerAwareEntity));
     }
 
     /**
@@ -77,33 +76,28 @@ public class PowerMeter extends CloudSimEntity {
     @Override
     public void processEvent(final SimEvent evt) {
         switch (evt.getTag()) {
-            case POWER_MEASUREMENT:
-                measurePowerConsumption();
-                scheduleMeasurement();
-                break;
-            case CloudSimTags.END_OF_SIMULATION:
-                this.shutdown();
-                break;
-            default:
-                throw new RuntimeException("Unknown Event: " + evt);
+            case POWER_MEASUREMENT -> measurePowerConsumption();
+            case CloudSimTags.END_OF_SIMULATION -> shutdown();
+            default -> throw new IllegalStateException("Unknown Event: " + evt);
         }
     }
 
     /**
-     * Measures the power consumption of entities.
+     * Measures the power consumption of entities and schedules next measurement.
      * If the entities list contains a single element,
      * the measurement is related to that entity.
      * If the list has multiples entities,
      * it's returned the combined power consumption of such entities.
      */
     private void measurePowerConsumption() {
-        final List<? extends PowerAware<? extends PowerModel>> powerAwareEntities = powerAwareEntitiesSupplier.get();
-        final PowerMeasurement measurement = powerAwareEntities.stream()
+        final var powerAwareEntitiesList = powerAwareEntitiesSupplier.get();
+        final PowerMeasurement measurement = powerAwareEntitiesList.stream()
             .map(PowerAware::getPowerModel)
             .map(PowerModel::getPowerMeasurement)
             .reduce(PowerMeasurement::add)
             .orElse(new PowerMeasurement());
         powerMeasurements.add(measurement);
+        scheduleMeasurement();
     }
 
     /**

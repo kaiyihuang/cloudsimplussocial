@@ -6,20 +6,22 @@
  */
 package org.cloudbus.cloudsim.vms;
 
+import org.cloudbus.cloudsim.brokers.DatacenterBroker;
+import org.cloudbus.cloudsim.core.Simulation;
 import org.cloudbus.cloudsim.hosts.HostSimple;
 import org.cloudbus.cloudsim.hosts.HostSimpleTest;
+import org.cloudbus.cloudsim.mocks.CloudSimMocker;
+import org.cloudbus.cloudsim.mocks.MocksHelper;
 import org.cloudbus.cloudsim.schedulers.MipsShare;
 import org.cloudbus.cloudsim.schedulers.cloudlet.CloudletScheduler;
 import org.cloudbus.cloudsim.schedulers.cloudlet.CloudletSchedulerTimeShared;
 import org.cloudsimplus.listeners.EventListener;
 import org.cloudsimplus.listeners.VmDatacenterEventInfo;
 import org.cloudsimplus.listeners.VmHostEventInfo;
-import org.easymock.EasyMock;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
-import static org.easymock.EasyMock.createMock;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -36,7 +38,56 @@ public class VmSimpleTest {
         cloudletScheduler = new CloudletSchedulerTimeShared();
         vm = VmTestUtil.createVm(
             cloudletScheduler,
-            b -> EasyMock.expect(b.requestIdleVmDestruction(EasyMock.anyObject())).andReturn(b));
+            b -> Mockito.when(b.requestIdleVmDestruction(Mockito.any())).thenReturn(b));
+    }
+
+    @Test
+    public void testGetWaitTimeForNonCreateVmWithZeroArrivedTime() {
+        assertEquals(0, vm.getWaitTime());
+    }
+
+    @Test
+    public void testGetWaitTimeForNonCreateVmWithNonZeroClockAndZeroArrivedTime() {
+        final int clock = 10;
+        final int arrivedTime = 0;
+        final Simulation simulation = CloudSimMocker.createMock(mock -> mock.clock(clock));
+        final DatacenterBroker broker = MocksHelper.createMockBroker(simulation, b -> {});
+
+        final Vm vm = new VmSimple(this.vm);
+        vm.setBroker(broker);
+        vm.setArrivedTime(arrivedTime);
+        assertEquals(clock, vm.getWaitTime());
+    }
+
+    @Test
+    public void testGetWaitTimeForNonCreateVmWithNonZeroClockAndArrivedTime() {
+        final int clock = 10;
+        final int arrivedTime = 2;
+        final Simulation simulation = CloudSimMocker.createMock(mock -> mock.clock(clock));
+        final DatacenterBroker broker = MocksHelper.createMockBroker(simulation, b -> {});
+
+        final Vm vm = new VmSimple(this.vm);
+        vm.setBroker(broker);
+        vm.setArrivedTime(arrivedTime);
+        assertEquals(8, vm.getWaitTime());
+    }
+
+    @Test
+    public void testGetWaitTimeForCreateVmWithNonZeroClockAndZeroArrivedTime() {
+        final int clock = 10;
+        vm.setArrivedTime(0);
+        vm.setCreated(true);
+        vm.setCreationTime(clock);
+        assertEquals(clock, vm.getWaitTime());
+    }
+
+    @Test
+    public void testGetWaitTimeForCreateVmWithNonZeroClockAndArrivedTime() {
+        final int clock = 10;
+        vm.setArrivedTime(2);
+        vm.setCreated(true);
+        vm.setCreationTime(clock);
+        assertEquals(8, vm.getWaitTime());
     }
 
     @Test
@@ -140,12 +191,12 @@ public class VmSimpleTest {
 
     @Test()
     public void testRemoveOnHostAllocationListenerWhenNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> vm.removeOnHostAllocationListener(null));
+        assertThrows(NullPointerException.class, () -> vm.removeOnHostAllocationListener(null));
     }
 
     @Test()
     public void testRemoveOnHostDeallocationListenerWhenNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> vm.removeOnHostDeallocationListener(null));
+        assertThrows(NullPointerException.class, () -> vm.removeOnHostDeallocationListener(null));
     }
 
     @Test
@@ -157,7 +208,7 @@ public class VmSimpleTest {
 
     @Test()
     public void testRemoveOnVmCreationFailureListenerWhenNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> vm.removeOnCreationFailureListener(null));
+        assertThrows(NullPointerException.class, () -> vm.removeOnCreationFailureListener(null));
     }
 
     @Test
@@ -169,7 +220,7 @@ public class VmSimpleTest {
 
     @Test()
     public void testRemoveOnUpdateVmProcessingListenerWhenNull() {
-        Assertions.assertThrows(NullPointerException.class, () -> vm.removeOnUpdateProcessingListener(null));
+        assertThrows(NullPointerException.class, () -> vm.removeOnUpdateProcessingListener(null));
     }
 
     @Test
@@ -251,19 +302,16 @@ public class VmSimpleTest {
     public void testGetCurrentRequestedBwWhenVmWasCreatedInsideHost() {
         final double currentBwUsagePercent = 0.5;
 
-        final CloudletScheduler cloudletScheduler = createMock(CloudletScheduler.class);
-        cloudletScheduler.setVm(EasyMock.anyObject());
-        EasyMock.expectLastCall().once();
-        EasyMock.expect(cloudletScheduler.getCurrentRequestedBwPercentUtilization())
-                .andReturn(currentBwUsagePercent);
-        EasyMock.replay(cloudletScheduler);
+        final CloudletScheduler scheduler = Mockito.mock(CloudletScheduler.class);
+        Mockito.doNothing().when(scheduler).setVm(Mockito.any());
+        Mockito.when(scheduler.getCurrentRequestedBwPercentUtilization())
+               .thenReturn(currentBwUsagePercent);
 
-        final Vm vm0 = VmTestUtil.createVm(cloudletScheduler);
+        final Vm vm0 = VmTestUtil.createVm(scheduler);
         vm0.setCreated(true);
 
         final long expectedCurrentBwUtilization = (long)(currentBwUsagePercent* VmTestUtil.BANDWIDTH);
         assertEquals(expectedCurrentBwUtilization, vm0.getCurrentRequestedBw());
-        EasyMock.verify(cloudletScheduler);
     }
 
     @Test
@@ -279,17 +327,15 @@ public class VmSimpleTest {
         final double currentRamUsagePercent = 0.5;
         final long expectedCurrentRamUsage = (long)(currentRamUsagePercent* VmTestUtil.RAM);
 
-        final CloudletScheduler  cloudletScheduler = createMock(CloudletScheduler.class);
-        cloudletScheduler.setVm(EasyMock.anyObject());
-        EasyMock.expectLastCall().once();
-        EasyMock.expect(cloudletScheduler.getCurrentRequestedRamPercentUtilization())
-                .andReturn(currentRamUsagePercent);
-        EasyMock.replay(cloudletScheduler);
+        final CloudletScheduler scheduler = Mockito.mock(CloudletScheduler.class);
+        Mockito.doNothing().when(scheduler).setVm(Mockito.any());
+        Mockito.when(scheduler.getCurrentRequestedRamPercentUtilization())
+                .thenReturn(currentRamUsagePercent);
 
-        final Vm vm0 = VmTestUtil.createVm(cloudletScheduler);
+        final Vm vm0 = VmTestUtil.createVm(scheduler);
         vm0.setCreated(true);
         assertEquals(expectedCurrentRamUsage, vm0.getCurrentRequestedRam());
-        EasyMock.verify(cloudletScheduler);
+        Mockito.verify(scheduler).getCurrentRequestedRamPercentUtilization();
     }
 
     @Test

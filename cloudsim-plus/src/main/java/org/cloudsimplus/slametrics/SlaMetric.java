@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a metric of a SLA contract.
+ * Represents a metric of an SLA contract.
  * Follows the standard defined by
  * <a href="http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/viewing_metrics_with_cloudwatch.html">AWS Cloudwatch</a>.
  *
@@ -44,10 +44,17 @@ public class SlaMetric {
     private List<SlaMetricDimension> dimensions;
     private String name;
 
+    /**
+     * Creates an SLA metric with no name.
+     */
     public SlaMetric(){
         this("");
     }
 
+    /**
+     * Creates an SLA metric
+     * @param name the metric name
+     */
     public SlaMetric(final String name){
         this.name = name;
         this.dimensions = new ArrayList<>();
@@ -73,7 +80,7 @@ public class SlaMetric {
 
     @Override
     public String toString() {
-        return "Metric{name = " + name + ",  dimensions = " + dimensions + '}';
+        return String.format("Metric{name = %s,  dimensions = %s}", name, dimensions);
     }
 
     /**
@@ -83,20 +90,24 @@ public class SlaMetric {
      * @return
      */
     public SlaMetricDimension getMinDimension() {
-        return dimensions.stream()
-            .filter(SlaMetricDimension::isMinValue)
-            .findFirst().orElse(DEFAULT_MIN_DIMENSION);
+        return dimensions
+                .stream()
+                .filter(SlaMetricDimension::isMinValue)
+                .findFirst()
+                .orElse(DEFAULT_MIN_DIMENSION);
     }
 
     /**
      * Gets a {@link SlaMetricDimension} representing the maximum value expected for the metric.
-     * If the {@link SlaMetricDimension#getValue()} is equals to {@link Double#MAX_VALUE}, it means
-     * there is no maximum value.
+     * If the {@link SlaMetricDimension#getValue()} is equals to {@link Double#MAX_VALUE},
+     * it means there is no maximum value.
      * @return
      */
     public SlaMetricDimension getMaxDimension() {
-        return dimensions.stream()
-            .filter(SlaMetricDimension::isMaxValue)
-            .findFirst().orElse(DEFAULT_MAX_DIMENSION);
+        return dimensions
+                .stream()
+                .filter(SlaMetricDimension::isMaxValue)
+                .findFirst()
+                .orElse(DEFAULT_MAX_DIMENSION);
     }
 }

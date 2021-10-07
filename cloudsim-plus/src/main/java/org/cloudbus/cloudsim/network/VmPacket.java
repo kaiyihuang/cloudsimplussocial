@@ -7,13 +7,13 @@
  */
 package org.cloudbus.cloudsim.network;
 
-import org.cloudbus.cloudsim.cloudlets.Cloudlet;
-import org.cloudbus.cloudsim.hosts.Host;
-import org.cloudbus.cloudsim.vms.Vm;
+import org.cloudbus.cloudsim.cloudlets.network.NetworkCloudlet;
+import org.cloudbus.cloudsim.hosts.network.NetworkHost;
+import org.cloudbus.cloudsim.vms.network.NetworkVm;
 
 /**
- * Represents a packet that travels from a {@link Vm} to another, through the virtual network
- * within a {@link Host}. It contains information about Cloudlets which are
+ * Represents a packet that travels from a {@link NetworkVm} to another, through the virtual network
+ * within a {@link NetworkHost}. It contains information about {@link NetworkCloudlet}s which are
  * communicating.
  *
  * <p>Please refer to following publication for more details:
@@ -34,45 +34,35 @@ import org.cloudbus.cloudsim.vms.Vm;
  *
  * @since CloudSim Toolkit 1.0
  */
-public class VmPacket implements NetworkPacket<Vm> {
+public class VmPacket implements NetworkPacket<NetworkVm> {
 
-    /**
-     * @see NetworkPacket#getSource()
-     */
-    private Vm sourceVm;
+    /** @see #getSource() */
+    private NetworkVm sourceVm;
 
-    /**
-     * @see #getDestination()
-     */
-    private Vm destinationVm;
+    /** @see #getDestination() */
+    private NetworkVm destinationVm;
 
-    /**
-     * @see #getSenderCloudlet()
-     */
-    private final Cloudlet senderCloudlet;
+    /** @see #getSenderCloudlet() */
+    private final NetworkCloudlet senderCloudlet;
 
-    /**
-     * @see #getReceiverCloudlet()
-     */
-    private final Cloudlet receiverCloudlet;
+    /** @see #getReceiverCloudlet() */
+    private final NetworkCloudlet receiverCloudlet;
 
-    /**
-     * @see #getSize()
-     */
+    /** @see #getSize() */
     private final long size;
 
     /**
-     * The time the packet was sent.
+     * The time (in seconds) the packet was sent.
      */
     private double sendTime;
 
     /**
-     * The time the packet was received.
+     * The time (in seconds) the packet was received.
      */
     private double receiveTime;
 
     /**
-     * Creates a packet to be sent to to a VM inside the
+     * Creates a packet to be sent to a VM inside the
      * Host of the sender VM.
      * @param sourceVm id of the VM sending the packet
      * @param destinationVm id of the VM that has to receive the packet
@@ -81,11 +71,12 @@ public class VmPacket implements NetworkPacket<Vm> {
      * @param receiverCloudlet cloudlet that has to receive the packet
      */
     public VmPacket(
-        Vm sourceVm,
-        Vm destinationVm,
-        long size,
-        Cloudlet senderCloudlet,
-        Cloudlet receiverCloudlet) {
+        final NetworkVm sourceVm,
+        final NetworkVm destinationVm,
+        final long size,
+        final NetworkCloudlet senderCloudlet,
+        final NetworkCloudlet receiverCloudlet)
+    {
         super();
         this.sourceVm = sourceVm;
         this.destinationVm = destinationVm;
@@ -122,51 +113,55 @@ public class VmPacket implements NetworkPacket<Vm> {
      * @return
      */
     @Override
-    public Vm getSource() {
+    public NetworkVm getSource() {
         return sourceVm;
     }
 
     /**
-     * Sets the id of the VM sending the packet.
+     * Sets the VM sending the packet.
      * This is the VM where the {@link #getSenderCloudlet() sending cloudlet}
      * is running.
      *
-     * @param sourceVmId the source VM id to set
+     * @param sourceVm the source VM to set
      */
     @Override
-    public void setSource(Vm sourceVmId) {
-        this.sourceVm = sourceVmId;
+    public void setSource(final NetworkVm sourceVm) {
+        this.sourceVm = sourceVm;
     }
 
     /**
-     * Gets the id of the VM that has to receive the packet.
+     * Gets the VM that has to receive the packet.
      * This is the VM where th {@link #getReceiverCloudlet() receiver cloudlet}
      * is running.
      *
      * @return
      */
     @Override
-    public Vm getDestination() {
+    public NetworkVm getDestination() {
         return destinationVm;
     }
 
     /**
-     * Sets the id of the VM that has to receive the packet.
+     * Sets the VM that has to receive the packet.
      * This is the VM where th {@link #getReceiverCloudlet() receiver cloudlet}
      * is running.
      *
-     * @param destinationVmId the destination VM id to set
+     * @param destinationVm the destination VM to set
      */
     @Override
-    public void setDestination(Vm destinationVmId) {
-        this.destinationVm = destinationVmId;
+    public void setDestination(final NetworkVm destinationVm) {
+        this.destinationVm = destinationVm;
+    }
+
+    public NetworkHost getDestinationHost() {
+        return destinationVm.getHost();
     }
 
     /**
      * Gets the cloudlet sending the packet.
      * @return
      */
-    public Cloudlet getSenderCloudlet() {
+    public NetworkCloudlet getSenderCloudlet() {
         return senderCloudlet;
     }
 
@@ -174,7 +169,7 @@ public class VmPacket implements NetworkPacket<Vm> {
      * Gets the cloudlet that has to receive the packet.
      * @return
      */
-    public Cloudlet getReceiverCloudlet() {
+    public NetworkCloudlet getReceiverCloudlet() {
         return receiverCloudlet;
     }
 

@@ -15,7 +15,7 @@ import java.io.UncheckedIOException;
 
 /**
  * An interface to be implemented by classes that read
- * a network graph (topology) from a file name with a specific format.
+ * a network graph (topology) from a file with a specific format.
  *
  * @author Thomas Hohnstein
  * @since CloudSim Toolkit 1.0
@@ -23,7 +23,7 @@ import java.io.UncheckedIOException;
 public interface TopologyReader {
 
 	/**
-	 * Reads a file and creates an {@link TopologicalGraph} object.
+	 * Reads a file and creates a {@link TopologicalGraph} object.
 	 *
 	 * @param filename Name of the file to read
 	 * @return The created TopologicalGraph
@@ -34,10 +34,10 @@ public interface TopologyReader {
     /**
      * Reads a file and creates an {@link TopologicalGraph} object.
      *
-     * @param sreader the {@link InputStreamReader} to read the file
+     * @param reader the {@link InputStreamReader} to read the file
      * @return The created TopologicalGraph
      * @throws UncheckedIOException when the file cannot be accessed
      */
-    TopologicalGraph readGraphFile(InputStreamReader sreader);
+    TopologicalGraph readGraphFile(InputStreamReader reader);
 
 }

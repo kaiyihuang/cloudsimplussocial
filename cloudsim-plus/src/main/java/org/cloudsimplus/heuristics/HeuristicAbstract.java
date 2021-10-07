@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -25,18 +25,17 @@ package org.cloudsimplus.heuristics;
 
 import org.cloudbus.cloudsim.distributions.ContinuousDistribution;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * A base class for {@link Heuristic} implementations.
+ * An abstract class for {@link Heuristic} implementations.
  *
  * @author Manoel Campos da Silva Filho
  * @param <S> The {@link HeuristicSolution class of solutions} the heuristic will deal with.
- *            It start with an initial
- *           solution (usually random, depending on each sub-class implementation)
- *           and executes the solution search in order
- *           to find a satisfying solution (defined by a stop criteria)
+ *            It starts with an initial
+ *            solution (usually random, depending on each sub-class implementation)
+ *            and executes the solution search in order
+ *            to find a satisfying solution (defined by a stop criteria)
  * @since CloudSim Plus 1.0
  */
 public abstract class HeuristicAbstract<S extends HeuristicSolution<?>>  implements Heuristic<S> {
@@ -46,22 +45,17 @@ public abstract class HeuristicAbstract<S extends HeuristicSolution<?>>  impleme
     private final Class<S> solutionClass;
 
 	private final ContinuousDistribution random;
-	/**
-	 * @see #getNeighborhoodSearchesByIteration()
-	 */
-    private int neighborhoodSearchesByIteration;
-	/**
-	 * @see #getBestSolutionSoFar()
-	 */
+
+	/** @see #getSearchesByIteration() */
+    private int searchesByIteration;
+
+	/** @see #getBestSolutionSoFar() */
     private S bestSolutionSoFar;
-	/**
-	 * @see #getNeighborSolution()
-	 */
+
+	/** @see #getNeighborSolution() */
     private S neighborSolution;
 
-	/**
-	 * @see #getSolveTime()
-	 */
+	/** @see #getSolveTime() */
 	private double solveTime;
 
 	/**
@@ -70,10 +64,10 @@ public abstract class HeuristicAbstract<S extends HeuristicSolution<?>>  impleme
 	 * @param random a random number generator
 	 * @param solutionClass reference to the generic class that will be used to instantiate heuristic solutions
 	 */
-	/* default */ HeuristicAbstract(final ContinuousDistribution random, final Class<S> solutionClass){
+	HeuristicAbstract(final ContinuousDistribution random, final Class<S> solutionClass){
 		this.solutionClass = solutionClass;
 		this.random = random;
-		this.neighborhoodSearchesByIteration = 1;
+		this.searchesByIteration = 1;
 		setBestSolutionSoFar(newSolutionInstance());
 		setNeighborSolution(bestSolutionSoFar);
 	}
@@ -92,7 +86,6 @@ public abstract class HeuristicAbstract<S extends HeuristicSolution<?>>  impleme
 	}
 
 	/**
-	 *
 	 * @return a random number generator
 	 */
 	protected ContinuousDistribution getRandom(){
@@ -101,7 +94,7 @@ public abstract class HeuristicAbstract<S extends HeuristicSolution<?>>  impleme
 
 	private S newSolutionInstance() {
 	    try {
-	        final Constructor<S> constructor = solutionClass.getConstructor(Heuristic.class);
+	        final var constructor = solutionClass.getConstructor(Heuristic.class);
 	        return constructor.newInstance(this);
 	    } catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException ex) {
 	        throw new RuntimeException(ex);
@@ -118,9 +111,9 @@ public abstract class HeuristicAbstract<S extends HeuristicSolution<?>>  impleme
 	public int getRandomValue(final int maxValue){
 		final double uniform = getRandom().sample();
 
-        /*always get an index between [0 and size[,
+        /* Always get an index between [0 and size[,
         regardless if the random number generator returns
-        values between [0 and 1[ or >= 1*/
+        values between [0 and 1[ or >= 1 */
 		return (int)(uniform >= 1 ? uniform % maxValue : uniform * maxValue);
 	}
 
@@ -138,7 +131,7 @@ public abstract class HeuristicAbstract<S extends HeuristicSolution<?>>  impleme
 	}
 
     private void searchSolutionInNeighborhood() {
-        for (int i = 0; i < getNeighborhoodSearchesByIteration(); i++) {
+        for (int i = 0; i < getSearchesByIteration(); i++) {
             setNeighborSolution(createNeighbor(getBestSolutionSoFar()));
             if (getAcceptanceProbability() > getRandomValue(1)) {
                 setBestSolutionSoFar(getNeighborSolution());
@@ -166,25 +159,25 @@ public abstract class HeuristicAbstract<S extends HeuristicSolution<?>>  impleme
 
 	/**
 	 * Sets a solution as the neighbor one.
-	 * @param neighborSolution the solution to set as the neighbor one.
+	 * @param solution the solution to set as the neighbor one.
 	 */
-    protected final void setNeighborSolution(final S neighborSolution) {
-        this.neighborSolution = neighborSolution;
+    protected final void setNeighborSolution(final S solution) {
+        this.neighborSolution = solution;
     }
 
     /**
      * Gets the number of neighborhood searches by each iteration of the heuristic.
      * @return
      */
-	public int getNeighborhoodSearchesByIteration() {
-        return neighborhoodSearchesByIteration;
+	public int getSearchesByIteration() {
+        return searchesByIteration;
     }
 
     /**
      * Sets the number of neighborhood searches by each iteration of the heuristic.
-     * @param neighborhoodSearches the number of neighborhood searches to set
+     * @param searches the number of neighborhood searches to set
      */
-	public void setNeighborhoodSearchesByIteration(final int neighborhoodSearches) {
-        this.neighborhoodSearchesByIteration = neighborhoodSearches;
+	public void setSearchesByIteration(final int searches) {
+        this.searchesByIteration = searches;
     }
 }

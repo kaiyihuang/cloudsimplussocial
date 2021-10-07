@@ -27,7 +27,6 @@ import org.cloudsimplus.listeners.HostUpdatesVmsProcessingEventInfo;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -37,7 +36,7 @@ import static java.util.stream.Collectors.toList;
  * (PM) inside a {@link Datacenter}. It executes actions related to management
  * of virtual machines (e.g., creation and destruction). A host has a defined
  * policy for provisioning memory and bw, as well as an allocation policy for
- * PEs to {@link Vm virtual machines}. A host is associated to a Datacenter and
+ * PEs to {@link Vm Virtual Machines}. A host is associated to a Datacenter and
  * can host virtual machines.
  *
  * @author Rodrigo N. Calheiros
@@ -53,6 +52,8 @@ public class HostSimple implements Host {
      * The User that owns this Host
      */
     public User owner;
+
+    protected HostResourceStats cpuUtilizationStats;
 
     /** @see #getStateHistory() */
     private final List<HostStateHistoryEntry> stateHistory;
@@ -154,7 +155,6 @@ public class HostSimple implements Host {
     private int failedPesNumber;
 
     private boolean lazySuitabilityEvaluation;
-    protected HostResourceStats cpuUtilizationStats;
 
     /**
      * Creates and powers on a Host without a pre-defined ID,
@@ -204,7 +204,8 @@ public class HostSimple implements Host {
     }
 
     /**
-     * Creates and powers on a Host with the given parameters and a {@link VmSchedulerSpaceShared} as default.
+     * Creates and powers on a Host with the given parameters and a
+     * {@link VmSchedulerSpaceShared} as default.
      *
      * @param ramProvisioner the ram provisioner with capacity in Megabytes
      * @param bwProvisioner the bw provisioner with capacity in Megabits/s
@@ -226,7 +227,8 @@ public class HostSimple implements Host {
     }
 
     /**
-     * Creates and powers on a Host without a pre-defined ID. It uses a {@link ResourceProvisionerSimple}
+     * Creates and powers on a Host without a pre-defined ID.
+     * It uses a {@link ResourceProvisionerSimple}
      * for RAM and Bandwidth and also sets a {@link VmSchedulerSpaceShared} as default.
      * The ID is automatically set when a List of Hosts is attached
      * to a {@link Datacenter}.
@@ -245,7 +247,10 @@ public class HostSimple implements Host {
         this(ram, bw, new HarddriveStorage(storage), peList);
     }
 
-    public HostSimple(final long ram, final long bw, final HarddriveStorage storage, final List<Pe> peList) {
+    public HostSimple(
+        final long ram, final long bw,
+        final HarddriveStorage storage, final List<Pe> peList)
+    {
         this(ram, bw, storage, peList, true);
     }
 
@@ -266,11 +271,17 @@ public class HostSimple implements Host {
      * @see #setBwProvisioner(ResourceProvisioner)
      * @see #setVmScheduler(VmScheduler)
      */
-    public HostSimple(final long ram, final long bw, final long storage, final List<Pe> peList, final boolean activate) {
+    public HostSimple(
+        final long ram, final long bw, final long storage,
+        final List<Pe> peList, final boolean activate)
+    {
         this(ram, bw, new HarddriveStorage(storage), peList, activate);
     }
 
-    private HostSimple(final long ram, final long bw, final HarddriveStorage storage, final List<Pe> peList, final boolean activate) {
+    private HostSimple(
+        final long ram, final long bw, final HarddriveStorage storage,
+        final List<Pe> peList, final boolean activate)
+    {
         this.setId(-1);
         this.setSimulation(Simulation.NULL);
         this.idleShutdownDeadline = DEF_IDLE_SHUTDOWN_DEADLINE;
@@ -278,7 +289,7 @@ public class HostSimple implements Host {
 
         this.ram = new Ram(ram);
         this.bw = new Bandwidth(bw);
-        this.disk = Objects.requireNonNull(storage);
+        this.disk = requireNonNull(storage);
         this.setRamProvisioner(new ResourceProvisionerSimple());
         this.setBwProvisioner(new ResourceProvisionerSimple());
 
@@ -420,10 +431,12 @@ public class HostSimple implements Host {
     }
 
     /**
-     * Try to allocate all resources that a VM requires (Storage, RAM, BW and MIPS) to be placed at this Host.
+     * Try to allocate all resources that a VM requires (Storage, RAM, BW and MIPS)
+     * to be placed at this Host.
      *
      * @param vm the VM to try allocating resources to
-     * @param inMigration If the VM is migrating into the Host or it is being just created for the first time.
+     * @param inMigration indicates whether the VM is migrating into the Host
+     *                    or it is being just created for the first time.
      * @return a {@link HostSuitability} to indicate if the Vm was placed into the host or not
      * (if the Host doesn't have enough resources to allocate the Vm)
      */
@@ -455,8 +468,10 @@ public class HostSimple implements Host {
             return;
         }
 
-        final String migration = inMigration ? "VM Migration" : "VM Creation";
-        final String msg = pmResource.getAvailableResource() > 0 ? "just "+pmResource.getAvailableResource()+" " + resourceUnit : "no amount";
+        final var migration = inMigration ? "VM Migration" : "VM Creation";
+        final var msg = pmResource.getAvailableResource() > 0 ?
+                            "just "+pmResource.getAvailableResource()+" " + resourceUnit :
+                            "no amount";
         LOGGER.error(
             "{}: {}: [{}] Allocation of {} to {} failed due to lack of {}. Required {} but there is {} available.",
             simulation.clockStr(), getClass().getSimpleName(), migration, vm, this,
@@ -479,24 +494,21 @@ public class HostSimple implements Host {
         return getSuitabilityFor(vm).fully();
     }
 
-    @Override
-    public HostSuitability getSuitabilityFor(final Vm vm) {
-        return isSuitableForVm(vm, false, false);
-    }
-
     /**
      * Checks if the host is suitable for vm
      * (if it has enough resources to attend the VM)
      * and the Host is not failed.
      *
      * @param vm the VM to check
-     * @param inMigration If the VM is migrating into the Host or it is being just created for the first time,
-     *                    in this case, just for logging purposes.
+     * @param inMigration indicates whether the VM is migrating into the Host
+     *                    or it is being just created for the first time
+     *                    (in the last case, just for logging purposes).
      * @param showFailureLog indicates if a error log must be shown when the Host is not suitable
-     * @return a {@link HostSuitability} object that indicate for which resources the Host is suitable or not for the given VM
+     * @return a {@link HostSuitability} object that indicate for which resources the Host
+     *         is suitable or not for the given VM
      */
     private HostSuitability isSuitableForVm(final Vm vm, final boolean inMigration, final boolean showFailureLog) {
-        final HostSuitability suitability = new HostSuitability();
+        final var suitability = new HostSuitability();
 
         suitability.setForStorage(disk.isAmountAvailable(vm.getStorage()));
         if (!suitability.forStorage()) {
@@ -520,6 +532,11 @@ public class HostSimple implements Host {
         }
 
         return suitability.setForPes(vmScheduler.isSuitableForVm(vm));
+    }
+
+    @Override
+    public HostSuitability getSuitabilityFor(final Vm vm) {
+        return isSuitableForVm(vm, false, false);
     }
 
     @Override
@@ -610,15 +627,15 @@ public class HostSimple implements Host {
 
     private void updateOnShutdownListeners() {
         for (int i = 0; i < onShutdownListeners.size(); i++) {
-            final EventListener<HostEventInfo> l = onShutdownListeners.get(i);
-            l.update(HostEventInfo.of(l, this, simulation.clock()));
+            final var listener = onShutdownListeners.get(i);
+            listener.update(HostEventInfo.of(listener, this, simulation.clock()));
         }
     }
 
     private void updateOnStartupListeners() {
         for (int i = 0; i < onStartupListeners.size(); i++) {
-            final EventListener<HostEventInfo> l = onStartupListeners.get(i);
-            l.update(HostEventInfo.of(l, this, simulation.clock()));
+            final var listener = onStartupListeners.get(i);
+            listener.update(HostEventInfo.of(listener, this, simulation.clock()));
         }
     }
 
@@ -677,7 +694,7 @@ public class HostSimple implements Host {
             return this;
         }
 
-        onStartupListeners.add(Objects.requireNonNull(listener));
+        onStartupListeners.add(requireNonNull(listener));
         return this;
     }
 
@@ -692,7 +709,7 @@ public class HostSimple implements Host {
             return this;
         }
 
-        onShutdownListeners.add(Objects.requireNonNull(listener));
+        onShutdownListeners.add(requireNonNull(listener));
         return this;
     }
 
@@ -791,7 +808,8 @@ public class HostSimple implements Host {
 
     private void checkSimulationIsRunningAndAttemptedToChangeHost(final String resourceName) {
         if(simulation.isRunning()){
-            throw new IllegalStateException("It is not allowed to change a Host's "+resourceName+" after the simulation started.");
+            final var msg = "It is not allowed to change a Host's %s after the simulation started.";
+            throw new IllegalStateException(String.format(msg, resourceName));
         }
     }
 
@@ -881,7 +899,6 @@ public class HostSimple implements Host {
     @Override
     public double getTotalUpTimeHours() {
         return TimeUtil.secondsToHours(getTotalUpTime());
-
     }
 
     @Override
@@ -993,14 +1010,14 @@ public class HostSimple implements Host {
      * You must call the method before the Pe status change and after it
      * so that the numbers for the previous and new PE status are updated.
      * @param status the status of the PE to process (either a previous or new status)
-     * @param increment true to increment the number of PEs in the given status to 1, false to decrement
+     * @param isIncrement true to increment the number of PEs in the given status to 1, false to decrement
      */
-    private void updatePeStatusCount(final Pe.Status status, final boolean increment) {
-        final int i = increment ? 1 : -1;
+    private void updatePeStatusCount(final Pe.Status status, final boolean isIncrement) {
+        final int inc = isIncrement ? 1 : -1;
         switch (status) {
-            case FAILED: incFailedPesNumber(i); break;
-            case FREE:  incFreePesNumber(i); break;
-            case BUSY: incBusyPesNumber(i); break;
+            case FAILED -> incFailedPesNumber(inc);
+            case FREE   -> incFreePesNumber(inc);
+            case BUSY   -> incBusyPesNumber(inc);
         }
     }
 
@@ -1011,7 +1028,7 @@ public class HostSimple implements Host {
      */
     protected void incFailedPesNumber(final int inc) {
         this.failedPesNumber += inc;
-        workingPesNumber += -inc;
+        workingPesNumber -= inc;
     }
 
     /**
@@ -1176,23 +1193,20 @@ public class HostSimple implements Host {
     }
 
     @Override
-    public int compareTo(final Host o) {
-        if(this.equals(Objects.requireNonNull(o))) {
+    public int compareTo(final Host other) {
+        if(this.equals(requireNonNull(other))) {
             return 0;
         }
 
-        return Long.compare(this.id, o.getId());
+        return Long.compare(this.id, other.getId());
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        final HostSimple that = (HostSimple) o;
-
-        if (id != that.id) return false;
-        return simulation.equals(that.simulation);
+    public boolean equals(final Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        final HostSimple that = (HostSimple) obj;
+        return this.getId() == that.getId() && this.simulation.equals(that.simulation);
     }
 
     @Override
@@ -1260,7 +1274,7 @@ public class HostSimple implements Host {
         }
 
         final double utilization = mipsUsage / totalMips;
-        return (utilization > 1 && utilization < 1.01 ? 1 : utilization);
+        return utilization > 1 && utilization < 1.01 ? 1 : utilization;
     }
 
     @Override
@@ -1308,7 +1322,7 @@ public class HostSimple implements Host {
 
     @Override
     public final void setPowerModel(final PowerModelHost powerModel) {
-        Objects.requireNonNull(powerModel,
+        requireNonNull(powerModel,
             "powerModel cannot be null. You could provide a " +
             PowerModelHost.class.getSimpleName() + ".NULL instead.");
 
@@ -1365,9 +1379,9 @@ public class HostSimple implements Host {
                 getSimulation().clockStr(), this, notAllocatedMipsByPe, vm.getNumberOfPes(), vm, reason);
         }
 
-        final VmStateHistoryEntry entry = new VmStateHistoryEntry(
-                                                currentTime, totalAllocatedMips, totalRequestedMips,
-                                                vm.isInMigration() && !getVmsMigratingIn().contains(vm));
+        final var entry = new VmStateHistoryEntry(
+                           currentTime, totalAllocatedMips, totalRequestedMips,
+                           vm.isInMigration() && !getVmsMigratingIn().contains(vm));
         vm.addStateHistoryEntry(entry);
 
         if (vm.isInMigration()) {
@@ -1408,10 +1422,10 @@ public class HostSimple implements Host {
         final double requestedMips,
         final boolean isActive)
     {
-        final HostStateHistoryEntry newState = new HostStateHistoryEntry(time, allocatedMips, requestedMips, isActive);
+        final var newState = new HostStateHistoryEntry(time, allocatedMips, requestedMips, isActive);
         if (!stateHistory.isEmpty()) {
             final HostStateHistoryEntry previousState = stateHistory.get(stateHistory.size() - 1);
-            if (previousState.getTime() == time) {
+            if (previousState.time() == time) {
                 stateHistory.set(stateHistory.size() - 1, newState);
                 return;
             }
@@ -1427,9 +1441,7 @@ public class HostSimple implements Host {
 
     @Override
     public List<Vm> getMigratableVms() {
-        return vmList.stream()
-            .filter(vm -> !vm.isInMigration())
-            .collect(Collectors.toList());
+        return vmList.stream().filter(vm -> !vm.isInMigration()).collect(toList());
     }
 
     /**
@@ -1449,7 +1461,7 @@ public class HostSimple implements Host {
     }
 
     /**
-     * Indicates if the Host must be automatically started up when
+     * Indicates if the Host must be automatically started up
      * when the assigned Datacenter is started up.
      * @return
      */

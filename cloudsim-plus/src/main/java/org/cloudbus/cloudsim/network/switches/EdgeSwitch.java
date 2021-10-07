@@ -13,7 +13,6 @@ import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter;
 import org.cloudbus.cloudsim.hosts.Host;
 import org.cloudbus.cloudsim.hosts.network.NetworkHost;
 import org.cloudbus.cloudsim.network.HostPacket;
-import org.cloudbus.cloudsim.vms.Vm;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +41,17 @@ import java.util.Objects;
  */
 public class EdgeSwitch extends AbstractSwitch {
     /**
+     * The level (layer) of the switch in the network topology.
+     */
+    public static final int LEVEL = 2;
+
+    /**
+     * Default number of ports that defines the number of
+     * {@link Host} that can be connected to the switch.
+     */
+    public static final int PORTS = 4;
+
+    /**
      * Default downlink bandwidth of EdgeSwitch in Megabits/s.
      * It also represents the uplink bandwidth of connected hosts.
      */
@@ -53,19 +63,6 @@ public class EdgeSwitch extends AbstractSwitch {
     private static final double DEF_SWITCHING_DELAY = 0.00157;
 
     /**
-     * The level (layer) of the switch in the network topology.
-     */
-    public static final int LEVEL = 2;
-
-
-    /**
-     * Default number of ports that defines the number of
-     * {@link Host} that can be connected to the switch.
-     */
-    public static final int PORTS = 4;
-
-
-    /**
      * List of hosts connected to the switch.
      */
     private final List<NetworkHost> hostList;
@@ -75,10 +72,10 @@ public class EdgeSwitch extends AbstractSwitch {
      * downlink and uplink ports, and corresponding bandwidths. In this switch,
      * downlink ports aren't connected to other switch but to hosts.
      *
-     * @param simulation The CloudSim instance that represents the simulation the Entity is related to
+     * @param simulation the CloudSim instance that represents the simulation the Entity belongs
      * @param dc The Datacenter where the switch is connected to
      */
-    public EdgeSwitch(CloudSim simulation, NetworkDatacenter dc) {
+    public EdgeSwitch(final CloudSim simulation, final NetworkDatacenter dc) {
         super(simulation, dc);
 
         this.hostList = new ArrayList<>();
@@ -89,7 +86,7 @@ public class EdgeSwitch extends AbstractSwitch {
     }
 
     @Override
-    protected void processPacketDown(SimEvent evt) {
+    protected void processPacketDown(final SimEvent evt) {
         super.processPacketDown(evt);
 
         // packet is to be received by host
@@ -98,19 +95,19 @@ public class EdgeSwitch extends AbstractSwitch {
     }
 
     private HostPacket extractReceivedHostPacket(final SimEvent evt) {
-        final HostPacket pkt = (HostPacket) evt.getData();
-        final Vm receiverVm = pkt.getVmPacket().getDestination();
-        final NetworkHost host = getVmHost(receiverVm);
+        final var pkt = (HostPacket) evt.getData();
+        final var receiverVm = pkt.getVmPacket().getDestination();
+        final var host = getVmHost(receiverVm);
         pkt.setDestination(host);
         return pkt;
     }
 
     @Override
-    protected void processPacketUp(SimEvent evt) {
+    protected void processPacketUp(final SimEvent evt) {
         super.processPacketUp(evt);
 
-        // packet is received from host
-        // packet is to be sent to aggregate level or to another host in the same level
+        /* packet is received from host and to be sent to
+        aggregate level or to another host in the same level */
         final HostPacket pkt = extractReceivedHostPacket(evt);
 
         // packet needs to go to a host which is connected directly to switch

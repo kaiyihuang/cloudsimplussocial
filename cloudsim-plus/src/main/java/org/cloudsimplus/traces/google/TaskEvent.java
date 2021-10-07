@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -43,7 +43,7 @@ import java.util.function.Function;
  * </p>
  *
  * <p>The {@link GoogleTaskEventsTraceReader} cannot create the Cloudlets itself
- * by hardcoding some simulation specific parameters such as the {@link UtilizationModel}
+ * by hard-coding some simulation specific parameters such as the {@link UtilizationModel}
  * or cloudlet length. This way, it request a {@link Function} implemented
  * by the developer using the {@link GoogleTaskEventsTraceReader} class
  * that has the custom logic to create Cloudlets.
@@ -71,7 +71,7 @@ public final class TaskEvent extends TaskData {
         return priority;
     }
 
-    protected TaskEvent setPriority(final int priority) {
+    TaskEvent setPriority(final int priority) {
         this.priority = priority;
         return this;
     }
@@ -99,7 +99,7 @@ public final class TaskEvent extends TaskData {
      * Such a value is defined by a "task usage" trace.
      * </p>
      * @return
-     * @see GoogleTaskEventsTraceReader.FieldIndex#RESOURCE_REQUEST_FOR_CPU_CORES
+     * @see TaskEventField#RESOURCE_REQUEST_FOR_CPU_CORES
      * @see GoogleTaskUsageTraceReader
      */
     public double getResourceRequestForCpuCores() {
@@ -117,7 +117,7 @@ public final class TaskEvent extends TaskData {
         return (long)(resourceRequestForCpuCores*maxCpuCores);
     }
 
-    /* default */ TaskEvent setResourceRequestForCpuCores(final double resourceRequestForCpuCores) {
+    TaskEvent setResourceRequestForCpuCores(final double resourceRequestForCpuCores) {
         this.resourceRequestForCpuCores = resourceRequestForCpuCores;
         return this;
     }
@@ -141,14 +141,14 @@ public final class TaskEvent extends TaskData {
      * when trying to create the Cloudlets.
      * </p>
      * @return
-     * @see GoogleTaskEventsTraceReader.FieldIndex#RESOURCE_REQUEST_FOR_RAM
+     * @see TaskEventField#RESOURCE_REQUEST_FOR_RAM
      * @see GoogleTaskUsageTraceReader
      */
     public double getResourceRequestForRam() {
         return resourceRequestForRam;
     }
 
-    /* default */ TaskEvent setResourceRequestForRam(final double resourceRequestForRam) {
+    TaskEvent setResourceRequestForRam(final double resourceRequestForRam) {
         this.resourceRequestForRam = resourceRequestForRam;
         return this;
     }
@@ -167,13 +167,13 @@ public final class TaskEvent extends TaskData {
      * when creating the Cloudlet, according to the researcher needs.
      * </p>
      * @return
-     * @see GoogleTaskEventsTraceReader.FieldIndex#RESOURCE_REQUEST_FOR_LOCAL_DISK_SPACE
+     * @see TaskEventField#RESOURCE_REQUEST_FOR_LOCAL_DISK_SPACE
      */
     public double getResourceRequestForLocalDiskSpace() {
         return resourceRequestForLocalDiskSpace;
     }
 
-    /* default */ TaskEvent setResourceRequestForLocalDiskSpace(final double resourceRequestForLocalDiskSpace) {
+    TaskEvent setResourceRequestForLocalDiskSpace(final double resourceRequestForLocalDiskSpace) {
         this.resourceRequestForLocalDiskSpace = resourceRequestForLocalDiskSpace;
         return this;
     }
@@ -181,13 +181,13 @@ public final class TaskEvent extends TaskData {
     /**
      * Gets the hashed username provided as an opaque base64-encoded string that can be tested for equality.
      * @return
-     * @see GoogleTaskEventsTraceReader.FieldIndex#USERNAME
+     * @see TaskEventField#USERNAME
      */
     public String getUserName() {
         return userName;
     }
 
-    /* default */ TaskEvent setUserName(final String userName) {
+    TaskEvent setUserName(final String userName) {
         this.userName = userName;
         return this;
     }
@@ -195,13 +195,13 @@ public final class TaskEvent extends TaskData {
     /**
      * Gets the time the event happened (converted to seconds).
      * @return
-     * @see GoogleTaskEventsTraceReader.FieldIndex#TIMESTAMP
+     * @see TaskEventField#TIMESTAMP
      */
     public double getTimestamp() {
         return timestamp;
     }
 
-    protected TaskEvent setTimestamp(final double timestamp) {
+    TaskEvent setTimestamp(final double timestamp) {
         this.timestamp = timestamp;
         return this;
     }
@@ -212,13 +212,13 @@ public final class TaskEvent extends TaskData {
      * with 3 representing a more latency-sensitive task (e.g., serving revenue-generating user requests)
      * and 0 representing a non-production task (e.g., development, non-business-critical analyses, etc.).
      * @return
-     * @see GoogleTaskEventsTraceReader.FieldIndex#SCHEDULING_CLASS
+     * @see TaskEventField#SCHEDULING_CLASS
      */
     public int getSchedulingClass() {
         return schedulingClass;
     }
 
-    /* default */ TaskEvent setSchedulingClass(final int schedulingClass) {
+    TaskEvent setSchedulingClass(final int schedulingClass) {
         this.schedulingClass = schedulingClass;
         return this;
     }
@@ -236,8 +236,35 @@ public final class TaskEvent extends TaskData {
      * @param type the int value of the task event type
      * @return
      */
-    public TaskEvent setType(final int type) {
+    TaskEvent setType(final int type) {
         this.type = TaskEventType.getValue(type);
         return this;
+    }
+
+    /**
+     * Creates a TaskEvent from the current processed line from a Google Task Events trace file.
+     * @param reader
+     * @return
+     */
+    public static TaskEvent of(final GoogleTaskEventsTraceReader reader) {
+        final TaskEvent event = new TaskEvent();
+        /*@TODO The tasks with the same username must run inside the same user's VM,
+         *       unless the machineID is different.
+         *       The task (cloudlet) needs to be mapped to a specific Host (according to the machineID).
+         *       The challenge here is because the task requirements are usually not known,
+         *       for instance when the task is submitted. It's just know when it starts to execute.
+         */
+        event
+            .setType(TaskEventField.EVENT_TYPE.getValue(reader))
+            .setTimestamp(TaskEventField.TIMESTAMP.getValue(reader))
+            .setResourceRequestForCpuCores(TaskEventField.RESOURCE_REQUEST_FOR_CPU_CORES.getValue(reader))
+            .setResourceRequestForLocalDiskSpace(TaskEventField.RESOURCE_REQUEST_FOR_LOCAL_DISK_SPACE.getValue(reader))
+            .setResourceRequestForRam(TaskEventField.RESOURCE_REQUEST_FOR_RAM.getValue(reader))
+            .setPriority(TaskEventField.PRIORITY.getValue(reader))
+            .setSchedulingClass(TaskEventField.SCHEDULING_CLASS.getValue(reader))
+            .setUserName(TaskEventField.USERNAME.getValue(reader))
+            .setJobId(TaskEventField.JOB_ID.getValue(reader))
+            .setTaskIndex(TaskEventField.TASK_INDEX.getValue(reader));
+        return event;
     }
 }

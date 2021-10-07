@@ -25,6 +25,7 @@ import org.cloudbus.cloudsim.vms.VmSocial;
 import org.cloudsimplus.listeners.CloudletResourceAllocationFailEventInfo;
 import org.cloudsimplus.listeners.EventListener;
 
+import java.io.Serial;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -35,15 +36,12 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
-import static org.cloudbus.cloudsim.utilizationmodels.UtilizationModel.Unit;
 import static org.cloudsimplus.listeners.CloudletResourceAllocationFailEventInfo.of;
 
 /**
- * Implements the basic features of a {@link CloudletScheduler}, representing
- * the policy of scheduling performed by a virtual machine to run its
- * {@link Cloudlet Cloudlets}. So, classes extending this must execute
- * Cloudlets. The interface for cloudlet management is also implemented in this
- * class. Each VM has to have its own instance of a CloudletScheduler.
+ * An abstract class for implementing {@link CloudletScheduler}s representing
+ * scheduling policies performed by a virtual machine to run its
+ * {@link Cloudlet Cloudlets}. Each VM must have its own instance of a CloudletScheduler.
  *
  * @author Rodrigo N. Calheiros
  * @author Anton Beloglazov
@@ -51,33 +49,28 @@ import static org.cloudsimplus.listeners.CloudletResourceAllocationFailEventInfo
  * @since CloudSim Toolkit 1.0
  */
 public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
-    /**
-     * @see #getCloudletPausedList()
-     */
+    @Serial
+    private static final long serialVersionUID = -2314361120790372742L;
+
+    /** @see #getCloudletPausedList() */
     private final List<CloudletExecution> cloudletPausedList;
-    /**
-     * @see #getCloudletFinishedList()
-     */
+
+    /** @see #getCloudletFinishedList() */
     private final List<CloudletExecution> cloudletFinishedList;
-    /**
-     * @see #getCloudletFailedList()
-     */
+
+    /** @see #getCloudletFailedList() */
     private final List<CloudletExecution> cloudletFailedList;
-    /**
-     * @see #getTaskScheduler()
-     */
+
+    /** @see #getTaskScheduler() */
     private CloudletTaskScheduler taskScheduler;
-    /**
-     * @see #getPreviousTime()
-     */
+
+    /** @see #getPreviousTime() */
     private double previousTime;
-    /**
-     * @see #getCurrentMipsShare()
-     */
+
+    /** @see #getCurrentMipsShare() */
     private MipsShare currentMipsShare;
-    /**
-     * @see #getCloudletExecList()
-     */
+
+    /** @see #getCloudletExecList() */
     private final List<CloudletExecution> cloudletExecList;
 
     /** @see #enableCloudletSubmittedList() */
@@ -91,23 +84,17 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
      */
     private final List<CloudletExecution> cloudletWaitingList;
 
-    /**
-     * @see #getVm()
-     */
+    /** @see #getVm() */
     private Vm vm;
 
-    /**
-     * @see #getCloudletReturnedList()
-     */
+    /** @see #getCloudletReturnedList() */
     private final Set<Cloudlet> cloudletReturnedList;
 
-    /**
-     * @see #addOnCloudletResourceAllocationFail(EventListener)
-     */
+    /** @see #addOnCloudletResourceAllocationFail(EventListener) */
     private final List<EventListener<CloudletResourceAllocationFailEventInfo>> resourceAllocationFailListeners;
 
     /**
-     * Creates a new CloudletScheduler object.
+     * Creates a CloudletScheduler.
      */
     protected CloudletSchedulerAbstract() {
         setPreviousTime(0.0);
@@ -344,14 +331,14 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
      * Cloudlet was found or not
      */
     protected Optional<CloudletExecution> findCloudletInAllLists(final double cloudletId) {
-        //Concatenate all lists into a stream
-        final Stream<List<CloudletExecution>> streamOfAllLists
-            = Stream.of(cloudletExecList, cloudletPausedList, cloudletWaitingList,
-            cloudletFinishedList, cloudletFailedList);
+        final var cloudletExecInfoListStream = Stream.of(
+            cloudletExecList, cloudletPausedList, cloudletWaitingList,
+            cloudletFinishedList, cloudletFailedList
+        );
 
         //Gets all elements in each list and makes them a single full list,
         //returning the first Cloudlet with the given id
-        return streamOfAllLists
+        return cloudletExecInfoListStream
             .flatMap(List::stream)
             .filter(cle -> cle.getCloudletId() == cloudletId)
             .findFirst();
@@ -484,25 +471,19 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
      * @param cle      Cloudlet to set its status
      * @param currentStatus the current cloudlet status
      * @param newStatus     the new status to set
-     * @TODO The parameter currentStatus only exists
-     *       because apparently, the cloudlet status is not being accordingly changed
-     *       along the simulation run.
+     * TODO The parameter currentStatus only exists
+     *      because apparently, the cloudlet status is not being accordingly changed
+     *      along the simulation run.
      */
     private void changeStatusOfCloudlet(final CloudletExecution cle, final Status currentStatus, final Status newStatus) {
-        if ((currentStatus == Status.INEXEC || currentStatus == Status.READY) && cle.getCloudlet().isFinished()) {
+        if ((currentStatus == Status.INEXEC || currentStatus == Status.READY) && cle.getCloudlet().isFinished())
             cloudletFinish(cle);
-        } else {
-            cle.setStatus(newStatus);
-        }
+        else cle.setStatus(newStatus);
 
-        switch (newStatus) {
-            case PAUSED:
-                cloudletPausedList.add(cle);
-            break;
-            case READY:
-                addCloudletToWaitingList(cle);
-            break;
-        }
+        if (newStatus == Status.PAUSED)
+            cloudletPausedList.add(cle);
+        else if (newStatus == Status.READY)
+            addCloudletToWaitingList(cle);
     }
 
     /**
@@ -629,9 +610,8 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
      * @param vmResource the kind of resource to updates its utilization (usually {@link Ram} or {@link Bandwidth}).
      */
     private void updateVmResourceAbsoluteUtilization(final CloudletExecution cle, final ResourceManageable vmResource) {
-        final Cloudlet cloudlet = cle.getCloudlet();
+        final var cloudlet = cle.getCloudlet();
         final long requested = (long) getCloudletResourceAbsoluteUtilization(cloudlet, vmResource);
-        final long available = vmResource.getAvailableResource();
         if(requested > vmResource.getCapacity()){
             LOGGER.warn(
                 "{}: {}: {} requested {} {} of {} but that is >= the VM capacity ({})",
@@ -640,6 +620,7 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
             return;
         }
 
+        final long available = vmResource.getAvailableResource();
         if(requested > available){
             final String msg1 =
                     available > 0 ?
@@ -658,12 +639,13 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
     }
 
     private void updateOnResourceAllocationFailListeners(
-        final ResourceManageable resource, final Cloudlet cloudlet, final long requested, final long available)
+        final ResourceManageable resource, final Cloudlet cloudlet,
+        final long requested, final long available)
     {
-        //Uses reversed indexed for to avoid ConcurrentModificationException if some Listener is deregistered during loop
+        //Uses reversed indexed for to avoid ConcurrentModificationException if some Listener is de-registered during loop
         for (int i = resourceAllocationFailListeners.size()-1; i >= 0; i--) {
-            EventListener<CloudletResourceAllocationFailEventInfo> l = resourceAllocationFailListeners.get(i);
-            l.update(of(l, cloudlet, resource.getClass(), requested, available, vm.getSimulation().clock()));
+            final var listener = resourceAllocationFailListeners.get(i);
+            listener.update(of(listener, cloudlet, resource.getClass(), requested, available, vm.getSimulation().clock()));
         }
     }
 
@@ -673,7 +655,7 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
             return this;
         }
 
-        resourceAllocationFailListeners.add(Objects.requireNonNull(listener));
+        resourceAllocationFailListeners.add(requireNonNull(listener));
         return this;
     }
 
@@ -694,7 +676,7 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
         final ResourceManageable vmResource)
     {
         final UtilizationModel um = cloudlet.getUtilizationModel(vmResource.getClass());
-        return um.getUnit() == Unit.ABSOLUTE ?
+        return um.getUnit() == UtilizationModel.Unit.ABSOLUTE ?
                 Math.min(um.getUtilization(), vmResource.getCapacity()) :
                 um.getUtilization() * vmResource.getCapacity();
     }
@@ -723,11 +705,11 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
      * @return the executed length, in Number of Instructions (I), since the last time cloudlet was processed.
      * @see #updateCloudletsProcessing(double)
      *
-     * @TODO This method is being called 2 times more than required.
-     *       Despite it is not causing any apparent issue, it has to be
-     *       investigated. For instance, for simulation time 2, with 2 cloudlets, the
-     *       method is being called 4 times instead of just 2 (1 for each cloudlet for
-     *       that time).
+     * TODO This method is being called 2 times more than required.
+     *      Despite it is not causing any apparent issue, it has to be
+     *      investigated. For instance, for simulation time 2, with 2 cloudlets, the
+     *      method is being called 4 times instead of just 2 (1 for each cloudlet for
+     *      that time).
      */
     private double cloudletExecutedInstructionsForTimeSpan(final CloudletExecution cle, final double currentTime) {
         /* The time the Cloudlet spent executing in fact, since the last time Cloudlet update was
@@ -736,16 +718,17 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
          * to be transferred from the Datacenter storage.
          */
         final double processingTimeSpan = hasCloudletFileTransferTimePassed(cle, currentTime) ? timeSpan(cle, currentTime) : 0;
-        final double cloudletUsedMips = getAllocatedMipsForCloudlet(cle, currentTime, true);
 
         final double vMemDelay = getVirtualMemoryDelay(cle, processingTimeSpan);
         final double reducedBwDelay = getBandwidthOverSubscriptionDelay(cle, processingTimeSpan);
         /*If delay is negative, resource was not allocated.
         If RAM and BW could not be allocated, just returns 0 to indicate no processing was performed
         due to lack of other resources.*/
-        if(vMemDelay == Double.MIN_VALUE && reducedBwDelay == Double.MIN_VALUE)
+        if(vMemDelay == Double.MIN_VALUE && reducedBwDelay == Double.MIN_VALUE) {
             return 0;
+        }
 
+        final double cloudletUsedMips = getAllocatedMipsForCloudlet(cle, currentTime, true);
         final double actualProcessingTime = processingTimeSpan - (validateDelay(vMemDelay) + validateDelay(reducedBwDelay));
         return cloudletUsedMips * actualProcessingTime * Conversion.MILLION;
     }
@@ -800,7 +783,7 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
 
             /*
              * Since using VMem requires some portion of the RAM to be swapped between the disk
-             * to open up RAM space, the required RAM cannot be higher then the RAM capacity
+             * to open up RAM space, the required RAM cannot be higher than the RAM capacity
              * neither than the available disk space.
              */
             (vmRam, requestedRam) -> requestedRam <= vmRam.getCapacity() && requestedRam <= vm.getStorage().getAvailableResource(),
@@ -1291,7 +1274,7 @@ public abstract class CloudletSchedulerAbstract implements CloudletScheduler {
         final String resourceName,
         final boolean requestedUtilization)
     {
-        if (model.getUnit() == Unit.ABSOLUTE) {
+        if (model.getUnit() == UtilizationModel.Unit.ABSOLUTE) {
             return Math.min(model.getUtilization(time), maxResourceAllowedToUse);
         }
 

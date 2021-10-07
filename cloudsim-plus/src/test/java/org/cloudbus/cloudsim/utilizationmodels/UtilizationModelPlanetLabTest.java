@@ -8,7 +8,10 @@ import org.junit.jupiter.api.function.Executable;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,9 +22,9 @@ public class UtilizationModelPlanetLabTest {
     /**
      * Time interval (in seconds) in which the data inside a PlanetLab trace file is collected.
      */
-    public static final int SCHEDULING_INTERVAL = 300;
+    private static final int SCHEDULING_INTERVAL = 300;
 
-    public static final String FILE = "146-179_surfsnel_dsl_internl_net_colostate_557.dat";
+    private static final String FILE = "146-179_surfsnel_dsl_internl_net_colostate_557.dat";
 
     private UtilizationModelPlanetLab instance;
 
@@ -39,8 +42,8 @@ public class UtilizationModelPlanetLabTest {
     private String createTempTraceFile(final int numLines, boolean includeHeaderWithLinesNumber){
         final OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING};
         final String dir = ResourceLoader.getResourcePath(getClass(), "./");
-        Path path = Paths.get(dir, TEMP_TRACE);
-        try (final BufferedWriter writer = Files.newBufferedWriter(path, options)){
+        final var path = Paths.get(dir, TEMP_TRACE);
+        try (BufferedWriter writer = Files.newBufferedWriter(path, options)){
             if(includeHeaderWithLinesNumber){
                 writer.write("#" + numLines + System.lineSeparator());
             }

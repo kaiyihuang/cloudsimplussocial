@@ -1,3 +1,26 @@
+/*
+ * CloudSim Plus: A modern, highly-extensible and easier-to-use Framework for
+ * Modeling and Simulation of Cloud Computing Infrastructures and Services.
+ * http://cloudsimplus.org
+ *
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
+ *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
+ *
+ *     This file is part of CloudSim Plus.
+ *
+ *     CloudSim Plus is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CloudSim Plus is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cloudbus.cloudsim.utilizationmodels;
 
 import org.cloudbus.cloudsim.core.CloudSim;
@@ -11,12 +34,12 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * An utility class used by {@link UtilizationModelDynamic} tests.
+ * A utility class used by {@link UtilizationModelDynamic} tests.
  *
  * @author Manoel Campos da Silva Filho
  * @since CloudSim Plus 4.0.0
  */
-final class TestUtil {
+final class TestUtility {
     /**
      * The number of seconds that the utilization will be tested.
      * For each second from 0 to this number, a {@link UtilizationModelDynamic#getUtilization(double)}
@@ -27,9 +50,13 @@ final class TestUtil {
     /**
      * A private constructor to avoid class instantiation.
      */
-    private TestUtil(){/**/}
+    private TestUtility(){/**/}
 
-    /* default */ static UtilizationModelDynamic createUtilizationModel(
+    static UtilizationModelDynamic createUtilizationModel(final double usagePercentInc, final double initUsage) {
+        return createUtilizationModel(usagePercentInc, initUsage, 0);
+    }
+
+    static UtilizationModelDynamic createUtilizationModel(
         final double usagePercentInc,
         final double initUsage,
         final int initSimulationTime)
@@ -47,27 +74,15 @@ final class TestUtil {
         return utilizationModel;
     }
 
-    /* default */ static UtilizationModelDynamic createUtilizationModel(final double usagePercentInc, final double initUsage) {
-        return createUtilizationModel(usagePercentInc, initUsage, 0);
-    }
-
-    private static double computeExpectedUtilization(
-        final double time,
-        final double initialUtilizationPercentage,
+    static void checkUtilization(
+        final double initUsage,
         final double usagePercentInc,
-        final double maxUsagePercent)
+        final UtilizationModelDynamic instance)
     {
-        final double utilizationPercentage =
-            initialUtilizationPercentage + (time * usagePercentInc);
-
-        if (usagePercentInc >= 0) {
-            return Math.min(utilizationPercentage, maxUsagePercent);
-        }
-
-        return Math.max(0, utilizationPercentage);
+        checkUtilization(initUsage, usagePercentInc, Conversion.HUNDRED_PERCENT, instance);
     }
 
-    public static void checkUtilization(
+    static void checkUtilization(
         final double initUsage,
         final double usagePercentInc,
         final double maxUsagePercent,
@@ -84,11 +99,19 @@ final class TestUtil {
         }
     }
 
-    /* default */ static void checkUtilization(
-        final double initUsage,
+    private static double computeExpectedUtilization(
+        final double time,
+        final double initialUtilizationPercentage,
         final double usagePercentInc,
-        final UtilizationModelDynamic instance)
+        final double maxUsagePercent)
     {
-        TestUtil.checkUtilization(initUsage, usagePercentInc, Conversion.HUNDRED_PERCENT, instance);
+        final double utilizationPercentage =
+            initialUtilizationPercentage + (time * usagePercentInc);
+
+        if (usagePercentInc >= 0) {
+            return Math.min(utilizationPercentage, maxUsagePercent);
+        }
+
+        return Math.max(0, utilizationPercentage);
     }
 }

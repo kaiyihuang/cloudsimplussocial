@@ -8,12 +8,7 @@
 
 package org.cloudbus.cloudsim.resources;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * SanStorage represents a Storage Area Network (SAN) composed of a set of
@@ -27,13 +22,14 @@ import java.util.Objects;
  *
  * @author Rodrigo N. Calheiros
  * @author Manoel Campos da Silva Filho
- * @TODO See the warning in class documentation.
  * @since CloudSim Toolkit 1.0
+ * TODO See the warning in class documentation.
  */
 public class SanStorage extends HarddriveStorage {
-    public static final int FILE_NOT_FOUND = -1;
+    public static final double FILE_NOT_FOUND = -1;
+
     /**
-     * An storage just to control the amount of space previously allocated
+     * A storage just to control the amount of space previously allocated
      * to add reserved files. When the reserved files are effectively added
      * to the Hard Drive, the reserved space for the file is remove for
      * this attribute. The attribute is used to avoid adding a reserved file
@@ -50,18 +46,14 @@ public class SanStorage extends HarddriveStorage {
      */
     private double bandwidth;
 
-    /**
-     * @see #getNetworkLatency()
-     */
+    /** @see #getNetworkLatency() */
     private double networkLatency;
-    /**
-     * @see #getFileNameList()
-     */
-    private List<String> fileNameList;
-    /**
-     * A list with all files stored on the hard drive.
-     */
-    private List<File> fileList;
+
+    /** @see #getFileNameList() */
+    private final List<String> fileNameList;
+
+    /** @see #getFileList() */
+    private final List<File> fileList;
 
     /**
      * Creates a new SAN with a given capacity, latency, and bandwidth of the network connection.
@@ -106,7 +98,7 @@ public class SanStorage extends HarddriveStorage {
     public double addReservedFile(final File file) {
         Objects.requireNonNull(file);
 
-        if (!reservedStorage.isResourceAmountBeingUsed((long) file.getSize())) {
+        if (!reservedStorage.isResourceAmountBeingUsed(file.getSize())) {
             throw new IllegalStateException("The file size wasn't previously reserved in order to add a reserved file.");
         }
 
@@ -125,6 +117,24 @@ public class SanStorage extends HarddriveStorage {
     }
 
     /**
+     * Adds a set of files to the storage. The time taken (in seconds) for adding each file can also
+     * be found using {@link File#getTransactionTime()}.
+     *
+     * @param list the files to be added
+     * @return the time taken (in seconds) for adding the specified file or zero if the
+     * file is invalid or there isn't available storage space.
+     */
+    public double addFile(final List<File> list) {
+        Objects.requireNonNull(list);
+        if (list.isEmpty()) {
+            LOGGER.debug("{}.addFile(): File list is empty.", getName());
+            return 0.0;
+        }
+
+        return list.stream().mapToDouble(this::addFile).sum();
+    }
+
+    /**
      * Adds a file to the storage. The time taken (in seconds) for adding the specified file can
      * also be found using {@link File#getTransactionTime()}.
      *
@@ -134,9 +144,9 @@ public class SanStorage extends HarddriveStorage {
      */
     public double addFile(final File file) {
         double time = 0.0;
-        if (!File.isValid(file)) {
-            LOGGER.warn("{}.addFile(): Invalid file {}", getName(), file);
-        } else if (!getStorage().isAmountAvailable((long) file.getSize())) {
+        File.validate(file);
+
+        if (!getStorage().isAmountAvailable(file.getSize())) {
             LOGGER.error("{}.addFile(): Not enough space to store {}", getName(), file.getName());
         } else if (!contains(file.getName())) { // check if the same file name is already taken
             fileList.add(file);               // add the file into the HD
@@ -147,50 +157,6 @@ public class SanStorage extends HarddriveStorage {
         }
 
         if (time == 0) {
-            return time;
-        }
-
-        return time + getTransferTime(file);
-
-    }
-
-    /**
-     * {@inheritDoc}
-     * The network latency is added to the transfer time.
-     *
-     * @param fileSize {@inheritDoc}
-     * @return {@inheritDoc}
-     */
-    @Override
-    public double getTransferTime(final int fileSize) {
-        //Gets the time to read the from from the local storage device (such as an HD or SSD).
-        final double storageDeviceReadTime = super.getTransferTime(fileSize);
-
-        //Gets the time to transfer the file through the network
-        final double networkTransferTime = getTransferTime(fileSize, bandwidth);
-
-        return storageDeviceReadTime + networkTransferTime + getNetworkLatency();
-    }
-
-    /**
-     * Removes a file from the storage. The time taken (in seconds) for deleting the specified file
-     * can also be found using {@link File#getTransactionTime()}.
-     *
-     * @param file the file to be removed
-     * @return the time taken (in seconds) for deleting the specified file
-     */
-    public double deleteFile(final File file) {
-        double time = 0.0;
-        // check if the file is valid and is in the storage
-        if (File.isValid(file) && contains(file)) {
-            fileList.remove(file);            // remove the file HD
-            fileNameList.remove(file.getName());  // remove the name from name list
-            getStorage().deallocateResource((long) file.getSize());    // decrement the current HD space
-            time = this.getTotalFileAddTime(file);  // total time
-            file.setTransactionTime(time);
-        }
-
-        if(time == 0) {
             return time;
         }
 
@@ -216,6 +182,7 @@ public class SanStorage extends HarddriveStorage {
         if (bandwidth <= 0) {
             throw new IllegalArgumentException("Bandwidth must be higher than zero");
         }
+
         this.bandwidth = bandwidth;
     }
 
@@ -238,30 +205,13 @@ public class SanStorage extends HarddriveStorage {
         if (networkLatency <= 0) {
             throw new IllegalArgumentException("Latency must be higher than zero");
         }
+
         this.networkLatency = networkLatency;
     }
 
     @Override
     public String toString() {
         return getName();
-    }
-
-    /**
-     * Adds a set of files to the storage. The time taken (in seconds) for adding each file can also
-     * be found using {@link File#getTransactionTime()}.
-     *
-     * @param list the files to be added
-     * @return the time taken (in seconds) for adding the specified file or zero if the
-     * file is invalid or there isn't available storage space.
-     */
-    public double addFile(final List<File> list) {
-        Objects.requireNonNull(list);
-        if (list.isEmpty()) {
-            LOGGER.debug("{}.addFile(): File list is empty.", getName());
-            return 0.0;
-        }
-
-        return list.stream().mapToDouble(this::addFile).sum();
     }
 
     /**
@@ -279,9 +229,9 @@ public class SanStorage extends HarddriveStorage {
      * @param fileSize the size to be reserved (in MByte)
      * @return true if reservation succeeded, false otherwise
      */
-    public boolean reserveSpace(int fileSize) {
-        if (getStorage().allocateResource((long) fileSize)) {
-            reservedStorage.allocateResource((long) fileSize);
+    public boolean reserveSpace(final int fileSize) {
+        if (getStorage().allocateResource(fileSize)) {
+            reservedStorage.allocateResource(fileSize);
             return true;
         }
 
@@ -313,7 +263,7 @@ public class SanStorage extends HarddriveStorage {
      * @return true if the storage device has the file, false otherwise.
      */
     public boolean hasFile(final String fileName) {
-        return getFile(fileName) != null;
+        return getFile(fileName).isPresent();
     }
 
     private int getDeletedFilesTotalSize() {
@@ -325,13 +275,10 @@ public class SanStorage extends HarddriveStorage {
      * file can also be found using {@link File#getTransactionTime()}.
      *
      * @param fileName the name of the needed file
-     * @return the file with the specified filename; null if not found
+     * @return an {@link Optional} containing the file if it was found; an empty Optional otherwise
      */
-    public File getFile(final String fileName) {
-        if (!File.isValid(fileName)) {
-            LOGGER.warn("{}.getFile(): Invalid file name {}.", getName(), fileName);
-            return null;
-        }
+    public Optional<File> getFile(final String fileName) {
+        File.validateFileName(fileName);
 
         int size = 0;
 
@@ -345,11 +292,11 @@ public class SanStorage extends HarddriveStorage {
 
                 // total time for this operation
                 currentFile.setTransactionTime(seekTime + transferTime);
-                return currentFile;
+                return Optional.of(currentFile);
             }
         }
 
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -373,26 +320,39 @@ public class SanStorage extends HarddriveStorage {
     /**
      * Gets the transfer time of a given file.
      *
-     * @param fileName the name of the file to compute the transfer time (where its size is defined in MByte)
-     * @return the transfer time in seconds or {@link SanStorage#FILE_NOT_FOUND} if the file was not found in this storage device
-     */
-    public double getTransferTime(final String fileName) {
-        final File file = getFile(fileName);
-        if (file == null) {
-            return SanStorage.FILE_NOT_FOUND;
-        }
-
-        return getTransferTime(file);
-    }
-
-    /**
-     * Gets the transfer time of a given file.
-     *
      * @param file the file to compute the transfer time (where its size is defined in MByte)
      * @return the transfer time in seconds
      */
     public double getTransferTime(final File file) {
         return getTransferTime(file.getSize());
+    }
+
+    /**
+     * {@inheritDoc}
+     * The network latency is added to the transfer time.
+     *
+     * @param fileSize {@inheritDoc}
+     * @return {@inheritDoc}
+     */
+    @Override
+    public double getTransferTime(final int fileSize) {
+        //Gets the time to read the from the local storage device (such as an HD or SSD).
+        final double storageDeviceReadTime = super.getTransferTime(fileSize);
+
+        //Gets the time to transfer the file through the network
+        final double networkTransferTime = getTransferTime(fileSize, bandwidth);
+
+        return storageDeviceReadTime + networkTransferTime + getNetworkLatency();
+    }
+
+    /**
+     * Gets the transfer time of a given file.
+     *
+     * @param fileName the name of the file to compute the transfer time (where its size is defined in MByte)
+     * @return the transfer time in seconds or {@link #FILE_NOT_FOUND} if the file was not found in this storage device
+     */
+    public double getTransferTime(final String fileName) {
+        return getFile(fileName).map(this::getTransferTime).orElse(FILE_NOT_FOUND);
     }
 
     /**
@@ -412,41 +372,46 @@ public class SanStorage extends HarddriveStorage {
      * can be found using {@link File#getTransactionTime()}.
      *
      * @param fileName the name of the file to be removed
-     * @return the deleted file.
+     * @return an {@link Optional} containing the deleted file if it is found; an empty Optional otherwise.
      */
-    public File deleteFile(final String fileName) {
-        if (!File.isValid(fileName)) {
-            return null;
-        }
+    public Optional<File> deleteFile(final String fileName) {
+        File.validateFileName(fileName);
 
-        final int i = fileNameList.indexOf(fileName);
-        if (i != -1) {
-            final File file = fileList.get(i);
+        final int index = fileNameList.indexOf(fileName);
+        if (index != -1) {
+            final File file = fileList.get(index);
             final double result = deleteFile(file);
             file.setTransactionTime(result);
-            return file;
+            return Optional.of(file);
         }
 
-        return null;
+        return Optional.empty();
     }
 
     /**
-     * Checks whether a file exists in the storage or not.
+     * Removes a file from the storage. The time taken (in seconds) for deleting the specified file
+     * can also be found using {@link File#getTransactionTime()}.
      *
-     * @param fileName the name of the file we are looking for
-     * @return true if the file is in the storage, false otherwise
+     * @param file the file to be removed
+     * @return the time taken (in seconds) for deleting the specified file
      */
-    public boolean contains(final String fileName) {
-        return isFileNameValid(fileName) && fileNameList.contains(fileName);
-    }
+    public double deleteFile(final File file) {
+        File.validate(file);
 
-    private boolean isFileNameValid(final String fileName) {
-        if (StringUtils.isBlank(fileName)) {
-            LOGGER.warn("Invalid file name {}", getName(), fileName);
-            return false;
+        double time = 0.0;
+        if (contains(file)) {
+            fileList.remove(file);
+            fileNameList.remove(file.getName());
+            getStorage().deallocateResource(file.getSize());
+            time = this.getTotalFileAddTime(file);
+            file.setTransactionTime(time);
         }
 
-        return true;
+        if(time == 0) {
+            return time;
+        }
+
+        return time + getTransferTime(file);
     }
 
     /**
@@ -456,11 +421,17 @@ public class SanStorage extends HarddriveStorage {
      * @return true if the file is in the storage, false otherwise
      */
     public boolean contains(final File file) {
-        if (!File.isValid(file)) {
-            return false;
-        }
+        return file != null && contains(file.getName());
+    }
 
-        return contains(file.getName());
+    /**
+     * Checks whether a file exists in the storage or not.
+     *
+     * @param fileName the name of the file we are looking for
+     * @return true if the file is in the storage, false otherwise
+     */
+    public boolean contains(final String fileName) {
+        return fileNameList.contains(fileName);
     }
 
     /**
@@ -478,16 +449,14 @@ public class SanStorage extends HarddriveStorage {
         }
 
         final String oldName = file.getName();
-        // replace the file name in the file (physical) list
-        final File renamedFile = getFile(oldName);
-        if (renamedFile != null) {
-            renamedFile.setName(newName);
-            renamedFile.setTransactionTime(0);
-            fileNameList.remove(oldName);
-            fileNameList.add(newName);
-            return true;
-        }
-
-        return false;
+        // Search for the file and renames if it's found
+        return getFile(oldName)
+            .map(fileFound -> {
+                fileFound.setName(newName);
+                fileFound.setTransactionTime(0);
+                fileNameList.remove(oldName);
+                fileNameList.add(newName);
+                return fileFound;
+            }).isPresent();
     }
 }

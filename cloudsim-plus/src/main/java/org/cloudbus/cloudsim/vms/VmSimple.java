@@ -114,6 +114,20 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     private MipsShare requestedMips;
 
     /**
+     * A copy constructor that creates a VM based on the configuration of another one.
+     * The created VM will have the same MIPS capacity, number of PEs,
+     * BW, RAM and size of the given VM, but a default CloudletScheduler and no broker.
+     * @param sourceVm the VM to be cloned
+     * @see #VmSimple(double, long)
+     */
+    public VmSimple(final Vm sourceVm) {
+        this(sourceVm.getMips(), sourceVm.getNumberOfPes());
+        this.setBw(sourceVm.getBw().getCapacity())
+            .setRam(sourceVm.getRam().getCapacity())
+            .setSize(sourceVm.getStorage().getCapacity());
+    }
+
+    /**
      * Creates a Vm with 1024 MEGA of RAM, 100 Megabits/s of Bandwidth and 1024 MEGA of Storage Size.
      * To change these values, use the respective setters. While the Vm {@link #isCreated()
      * is being instantiated}, such values can be changed freely.
@@ -206,35 +220,43 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
      * @see #setDefaultStorageCapacity(long)
      */
     public VmSimple(final long id, final long mipsCapacity, final long numberOfPes) {
-        this.resources = new ArrayList<>(4);
-        setInMigration(false);
-        setHost(Host.NULL);
-        setCloudletScheduler(new CloudletSchedulerTimeShared());
-        this.processor = new Processor(this, mipsCapacity, numberOfPes);
-        this.description = "";
-        this.startTime = -1;
-        this.stopTime = -1;
-        this.lastBusyTime = Double.MAX_VALUE;
-
+        super();
         setId(id);
-        setBroker(DatacenterBroker.NULL);
-        setMips(mipsCapacity);
-        setNumberOfPes(numberOfPes);
-
-        setRam(new Ram(defaultRamCapacity));
-        setBw(new Bandwidth(defaultBwCapacity));
-        setStorage(new SimpleStorage(defaultStorageCapacity));
-
-        setSubmissionDelay(0);
-        setVmm("Xen");
-        stateHistory = new LinkedList<>();
-
+        this.resources = new ArrayList<>(4);
         this.onMigrationStartListeners = new ArrayList<>();
         this.onMigrationFinishListeners = new ArrayList<>();
         this.onHostAllocationListeners = new ArrayList<>();
         this.onHostDeallocationListeners = new ArrayList<>();
         this.onCreationFailureListeners = new ArrayList<>();
         this.onUpdateProcessingListeners = new ArrayList<>();
+        this.stateHistory = new LinkedList<>();
+        this.allocatedMips = new MipsShare();
+        this.requestedMips = new MipsShare();
+
+        this.processor = new Processor(this, mipsCapacity, numberOfPes);
+        setMips(mipsCapacity);
+        setNumberOfPes(numberOfPes);
+
+        mutableAttributesInit();
+
+        //initiate number of free PEs as number of PEs of VM
+        freePesNumber = numberOfPes;
+        expectedFreePesNumber = numberOfPes;
+    }
+
+    private void mutableAttributesInit() {
+        this.description = "";
+        this.startTime = -1;
+        this.stopTime = -1;
+        this.lastBusyTime = Double.MAX_VALUE;
+        setBroker(DatacenterBroker.NULL);
+        setSubmissionDelay(0);
+        setVmm("Xen");
+
+        setInMigration(false);
+        this.host = Host.NULL;
+        setCloudletScheduler(new CloudletSchedulerTimeShared());
+
         this.setHorizontalScaling(HorizontalVmScaling.NULL);
         this.setRamVerticalScaling(VerticalVmScaling.NULL);
         this.setBwVerticalScaling(VerticalVmScaling.NULL);
@@ -242,25 +264,9 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
 
         cpuUtilizationStats = VmResourceStats.NULL;
 
-        //initiate number of free PEs as number of PEs of VM
-        freePesNumber = numberOfPes;
-        expectedFreePesNumber = numberOfPes;
-        allocatedMips = new MipsShare();
-        requestedMips = new MipsShare();
-    }
-
-    /**
-     * A copy constructor that creates a VM based on the configuration of another one.
-     * The created VM will have the same MIPS capacity, number of PEs,
-     * BW, RAM and size of the given VM, but a default CloudletScheduler and no broker.
-     * @param sourceVm the VM to be cloned
-     * @see #VmSimple(double, long)
-     */
-    public VmSimple(final Vm sourceVm) {
-        this(sourceVm.getMips(), sourceVm.getNumberOfPes());
-        this.setBw(sourceVm.getBw().getCapacity())
-            .setRam(sourceVm.getRam().getCapacity())
-            .setSize(sourceVm.getStorage().getCapacity());
+        setRam(new Ram(defaultRamCapacity));
+        setBw(new Bandwidth(defaultBwCapacity));
+        setStorage(new SimpleStorage(defaultStorageCapacity));
     }
 
     @Override
@@ -278,6 +284,12 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
         final double nextSimulationDelay = cloudletScheduler.updateProcessing(currentTime, mipsShare);
         notifyOnUpdateProcessingListeners();
 
+        cpuUtilizationStats.add(currentTime);
+        getBroker().requestIdleVmDestruction(this);
+        if (nextSimulationDelay == Double.MAX_VALUE) {
+            return nextSimulationDelay;
+        }
+
         /* If the current time is some value with the decimals greater than x.0
          * (such as 45.1) and the next event delay is any integer number such as 5,
          * then the next simulation time would be 50.1.
@@ -288,12 +300,6 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
          * before the utilization drop.
          */
         final double decimals = currentTime - (int) currentTime;
-        cpuUtilizationStats.add(currentTime);
-        getBroker().requestIdleVmDestruction(this);
-        if (nextSimulationDelay == Double.MAX_VALUE) {
-            return nextSimulationDelay;
-        }
-
         return nextSimulationDelay - decimals < 0 ? nextSimulationDelay : nextSimulationDelay - decimals;
     }
 
@@ -612,11 +618,13 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     }
 
     @Override
-    public final void setHost(final Host host) {
-        if (Objects.requireNonNull(host) == Host.NULL) {
+    public Vm setHost(final Host host) {
+        if (Host.NULL.equals(requireNonNull(host)))  {
             setCreated(false);
         }
+
         this.host = host;
+        return this;
     }
 
     @Override
@@ -658,8 +666,8 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     public void updateMigrationStartListeners(final Host targetHost){
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onMigrationStartListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onMigrationStartListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this, targetHost));
+            final var listener = onMigrationStartListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this, targetHost));
         }
     }
 
@@ -670,13 +678,13 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     public void updateMigrationFinishListeners(final Host targetHost){
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onMigrationFinishListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onMigrationFinishListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this, targetHost));
+            final var listener = onMigrationFinishListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this, targetHost));
         }
     }
 
     @Override
-    public boolean isCreated() {
+    public final boolean isCreated() {
         return created;
     }
 
@@ -815,26 +823,18 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     /**
      * Compare this Vm with another one based on {@link #getTotalMipsCapacity()}.
      *
-     * @param o the Vm to compare to
+     * @param obj the Vm to compare to
      * @return {@inheritDoc}
      */
     @Override
-    public int compareTo(final Vm o) {
-        if(this.equals(Objects.requireNonNull(o))) {
+    public int compareTo(final Vm obj) {
+        if(this.equals(requireNonNull(obj))) {
             return 0;
         }
 
-        return Double.compare(getTotalMipsCapacity(), o.getTotalMipsCapacity()) +
-               Long.compare(this.getId(), o.getId()) +
-               this.getBroker().compareTo(o.getBroker());
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final VmSimple vmSimple = (VmSimple) o;
-        return vmSimple.getId() == getId() && getBroker().equals(vmSimple.getBroker());
+        return Double.compare(getTotalMipsCapacity(), obj.getTotalMipsCapacity()) +
+               Long.compare(this.getId(), obj.getId()) +
+               this.getBroker().compareTo(obj.getBroker());
     }
 
     @Override
@@ -873,6 +873,7 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
         if (submissionDelay < 0) {
             return;
         }
+
         this.submissionDelay = submissionDelay;
     }
 
@@ -885,8 +886,8 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     public void notifyOnHostAllocationListeners() {
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onHostAllocationListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onHostAllocationListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this));
+            final var listener = onHostAllocationListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this));
         }
     }
 
@@ -895,8 +896,8 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
         requireNonNull(deallocatedHost);
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onHostDeallocationListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onHostDeallocationListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this, deallocatedHost));
+            final var listener = onHostDeallocationListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this, deallocatedHost));
         }
     }
 
@@ -906,8 +907,8 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     public void notifyOnUpdateProcessingListeners() {
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onUpdateProcessingListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onUpdateProcessingListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this));
+            final var listener = onUpdateProcessingListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this));
         }
     }
 
@@ -916,8 +917,8 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
         requireNonNull(failedDatacenter);
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onCreationFailureListeners.size(); i++) {
-            final EventListener<VmDatacenterEventInfo> l = onCreationFailureListeners.get(i);
-            l.update(VmDatacenterEventInfo.of(l, this, failedDatacenter));
+            final var listener = onCreationFailureListeners.get(i);
+            listener.update(VmDatacenterEventInfo.of(listener, this, failedDatacenter));
         }
     }
 
@@ -1007,7 +1008,7 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     }
 
     public void setGroup(final VmGroup group) {
-        this.group = Objects.requireNonNull(group);
+        this.group = requireNonNull(group);
     }
 
     @Override
@@ -1089,7 +1090,7 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     }
 
     public void setAllocatedMips(final MipsShare allocatedMips) {
-        this.allocatedMips = Objects.requireNonNull(allocatedMips);
+        this.allocatedMips = requireNonNull(allocatedMips);
     }
 
     public MipsShare getRequestedMips() {
@@ -1097,6 +1098,6 @@ public class VmSimple extends CustomerEntityAbstract implements Vm {
     }
 
     public void setRequestedMips(final MipsShare requestedMips) {
-        this.requestedMips = Objects.requireNonNull(requestedMips);
+        this.requestedMips = requireNonNull(requestedMips);
     }
 }

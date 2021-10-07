@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -38,7 +38,7 @@ import java.util.List;
  * @since CloudSim Plus 1.0
  */
 public class CloudletToVmMappingSimulatedAnnealing
-      extends SimulatedAnnealing<CloudletToVmMappingSolution>
+      extends SimulatedAnnealingAbstract<CloudletToVmMappingSolution>
       implements CloudletToVmMappingHeuristic
 {
     private CloudletToVmMappingSolution initialSolution;
@@ -64,7 +64,7 @@ public class CloudletToVmMappingSimulatedAnnealing
     }
 
     private CloudletToVmMappingSolution generateRandomSolution() {
-        final CloudletToVmMappingSolution solution = new CloudletToVmMappingSolution(this);
+        final var solution = new CloudletToVmMappingSolution(this);
         cloudletList.forEach(cloudlet -> solution.bindCloudletToVm(cloudlet, getRandomVm()));
         return solution;
     }
@@ -92,7 +92,7 @@ public class CloudletToVmMappingSimulatedAnnealing
     }
 
     @Override
-    public void setVmList(List<Vm> vmList) {
+    public void setVmList(final List<Vm> vmList) {
         this.vmList = vmList;
     }
 
@@ -116,9 +116,8 @@ public class CloudletToVmMappingSimulatedAnnealing
 
     @Override
     public CloudletToVmMappingSolution createNeighbor(final CloudletToVmMappingSolution source) {
-        final CloudletToVmMappingSolution clone = new CloudletToVmMappingSolution(source);
+        final var clone = new CloudletToVmMappingSolution(source);
         clone.swapVmsOfTwoRandomSelectedMapEntries();
         return clone;
     }
-
 }

@@ -1,7 +1,6 @@
 package org.cloudbus.cloudsim.resources;
 
 import org.cloudbus.cloudsim.util.DataCloudTags;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,8 +28,7 @@ public class FileTest {
 
     @Test()
     public void testCopyConstructorWhenFileParameterIsNull() {
-        final File nullFile = null;
-        Assertions.assertThrows(NullPointerException.class, () -> new File(nullFile));
+        assertThrows(NullPointerException.class, () -> new File(null));
     }
 
     @Test()
@@ -42,29 +40,29 @@ public class FileTest {
 
     @Test()
     public void testCreateWhenNameIsNull() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new File(null, 100));
+        assertThrows(NullPointerException.class, () -> new File(null, 100));
     }
 
     @Test()
     public void testCreateWhenZeroSize() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new File(NAME, 0));
+        assertThrows(IllegalArgumentException.class, () -> new File(NAME, 0));
     }
 
     @Test()
     public void testCreateWhenNegativeSize() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new File(NAME, -1));
+        assertThrows(IllegalArgumentException.class, () -> new File(NAME, -1));
     }
 
     @Test()
     public void testCreateFileWhenEmptyName() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new File("", 100));
+        assertThrows(IllegalArgumentException.class, () -> new File("", 100));
     }
 
     @Test
     public void testMakeReplica() {
         final File instance = createFile();
         final File replica = instance.makeReplica();
-        Assertions.assertAll(
+        assertAll(
             () -> assertEquals(instance.getName(), replica.getName()),
             () -> assertEquals(instance.getSize(), replica.getSize()),
             () -> assertTrue(instance.isMasterCopy()),
@@ -97,7 +95,7 @@ public class FileTest {
     @Test()
     public void testSetDatacenterToNull() {
         final File instance = createFile();
-        Assertions.assertThrows(NullPointerException.class, () -> instance.setDatacenter(null));
+        assertThrows(NullPointerException.class, () -> instance.setDatacenter(null));
     }
 
     @Test
@@ -110,20 +108,20 @@ public class FileTest {
 
     @Test
     public void testIsValidWhenParamString() {
-        assertTrue(File.isValid("new-file.txt"));
-        assertTrue(File.isValid(NAME));
-        assertFalse(File.isValid(""));
+        final String newFileName = "new-file.txt";
+        assertEquals(newFileName, File.validateFileName(newFileName));
+        assertEquals(NAME, File.validateFileName(NAME));
+        assertThrows(IllegalArgumentException.class, () -> File.validateFileName(""));
 
-        final String nullStr = null;
-        assertFalse(File.isValid(nullStr));
-        assertTrue(File.isValid("file with blank spaces.txt"));
-        assertFalse(File.isValid("      "));
+        assertThrows(NullPointerException.class, () -> File.validateFileName(null));
+        final String nameWithSpaces = "file with blank spaces.txt";
+        assertEquals(nameWithSpaces, File.validateFileName(nameWithSpaces));
+        assertThrows(IllegalArgumentException.class, () -> File.validateFileName("      "));
     }
 
     @Test
     public void testIsValidWhenParamNullFile() {
-        final File nullFile = null;
-        assertFalse(File.isValid(nullFile));
+        assertThrows(NullPointerException.class, () -> File.validate(null));
     }
 
     @Test
@@ -265,7 +263,8 @@ public class FileTest {
 
     @Test
     public void testSetTransactionTime() {
-        final double time1 = 1, zero = 0;
+        final double time1 = 1;
+        final double zero = 0;
         final File instance = createFile();
         assertEquals(zero, instance.getTransactionTime());
 

@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -32,25 +32,27 @@ import org.apache.commons.lang3.StringUtils;
  * @since CloudSim Plus 1.2.0
  */
 public abstract class ResourceAbstract implements Resource {
-    private String unit;
-
     /** @see #getCapacity() */
     protected long capacity;
 
+    private final String unit;
+
     public ResourceAbstract(final long capacity, final String unit){
-        if(!isCapacityValid(capacity)) {
+        this.capacity = validateCapacity(capacity);
+
+        if(unit == null || StringUtils.isBlank(unit)) {
+            throw new IllegalArgumentException("Resource measurement unit cannot be null or empty");
+        }
+
+        this.unit = unit;
+    }
+
+    private long validateCapacity(final long capacity) {
+        if(capacity < 0){
             throw new IllegalArgumentException("Capacity cannot be negative");
         }
 
-        if(unit == null || StringUtils.isBlank(unit))
-            throw new IllegalArgumentException("Resource measurement unit cannot be null or empty");
-
-        this.unit = unit;
-        this.capacity = capacity;
-    }
-
-    private boolean isCapacityValid(final long capacity) {
-        return capacity >= 0;
+        return capacity;
     }
 
     @Override

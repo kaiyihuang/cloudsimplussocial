@@ -11,8 +11,10 @@ import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.cloudlets.CloudletExecution;
 import org.cloudbus.cloudsim.resources.Pe;
 
+import java.io.Serial;
+
 /**
- * CloudletSchedulerSpaceShared implements a policy of scheduling performed by a
+ * Implements a policy of scheduling performed by a
  * virtual machine to run its {@link Cloudlet Cloudlets}. It considers there
  * will be only one Cloudlet per VM. Other Cloudlets will be in a waiting list.
  * It also considers that the time to transfer Cloudlets to the Vm happens
@@ -30,6 +32,8 @@ import org.cloudbus.cloudsim.resources.Pe;
  * @since CloudSim Toolkit 1.0
  */
 public class CloudletSchedulerSpaceShared extends CloudletSchedulerAbstract {
+    @Serial
+    private static final long serialVersionUID = 4699085761507163349L;
 
     @Override
     public double cloudletResume(Cloudlet cloudlet) {
@@ -41,15 +45,15 @@ public class CloudletSchedulerSpaceShared extends CloudletSchedulerAbstract {
     /**
      * Moves a Cloudlet that is being resumed to the exec or waiting List.
      *
-     * @param c the resumed Cloudlet to move
+     * @param cle the resumed Cloudlet to move
      * @return the time the cloudlet is expected to finish or zero if it was moved to the waiting list
      */
-    private double movePausedCloudletToExecListOrWaitingList(CloudletExecution c) {
-        getCloudletPausedList().remove(c);
+    private double movePausedCloudletToExecListOrWaitingList(final CloudletExecution cle) {
+        getCloudletPausedList().remove(cle);
 
         // it can go to the exec list
-        if (isThereEnoughFreePesForCloudlet(c)) {
-            return movePausedCloudletToExecList(c);
+        if (isThereEnoughFreePesForCloudlet(cle)) {
+            return movePausedCloudletToExecList(cle);
         }
 
         // No enough free PEs: go to the waiting queue
@@ -60,19 +64,19 @@ public class CloudletSchedulerSpaceShared extends CloudletSchedulerAbstract {
          * It goes to the end of the waiting list because other cloudlets
          * could be waiting longer and have priority to execute.
          */
-        addCloudletToWaitingList(c);
+        addCloudletToWaitingList(cle);
         return 0.0;
     }
 
     /**
      * Moves a paused cloudlet to the execution list.
      *
-     * @param c the cloudlet to be moved
+     * @param cle the cloudlet to be moved
      * @return the time the cloudlet is expected to finish
      */
-    private double movePausedCloudletToExecList(CloudletExecution c) {
-        addCloudletToExecList(c);
-        return cloudletEstimatedFinishTime(c, getVm().getSimulation().clock());
+    private double movePausedCloudletToExecList(final CloudletExecution cle) {
+        addCloudletToExecList(cle);
+        return cloudletEstimatedFinishTime(cle, getVm().getSimulation().clock());
     }
 
     /**
@@ -82,11 +86,11 @@ public class CloudletSchedulerSpaceShared extends CloudletSchedulerAbstract {
      * completely. By this way, if there are more Cloudlets than PEs, some
      * Cloudlet will not be allowed to start executing immediately.
      *
-     * @param cloudlet {@inheritDoc}
+     * @param cle {@inheritDoc}
      * @return {@inheritDoc}
      */
     @Override
-    protected boolean canExecuteCloudletInternal(final CloudletExecution cloudlet) {
-        return isThereEnoughFreePesForCloudlet(cloudlet);
+    protected boolean canExecuteCloudletInternal(final CloudletExecution cle) {
+        return isThereEnoughFreePesForCloudlet(cle);
     }
 }

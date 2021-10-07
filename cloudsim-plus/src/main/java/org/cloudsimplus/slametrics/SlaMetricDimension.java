@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -24,7 +24,7 @@
 package org.cloudsimplus.slametrics;
 
 /**
- * Represents a value for a specific metric of a SLA contract,
+ * Represents a value for a specific metric of an SLA contract,
  * following the format defined by the
  * <a href="http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/viewing_metrics_with_cloudwatch.html">AWS CloudWatch</a>.
  *
@@ -58,7 +58,7 @@ public final class SlaMetricDimension {
         return name;
     }
 
-    public SlaMetricDimension setName(String name) {
+    public SlaMetricDimension setName(final String name) {
         this.name = name;
         return this;
     }
@@ -118,7 +118,7 @@ public final class SlaMetricDimension {
         return unit;
     }
 
-    public SlaMetricDimension setUnit(String unit) {
+    public SlaMetricDimension setUnit(final String unit) {
         this.unit = unit;
         return this;
     }

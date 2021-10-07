@@ -7,17 +7,17 @@
  */
 package org.cloudbus.cloudsim.cloudlets.network;
 
+import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.cloudlets.CloudletSimple;
+import org.cloudbus.cloudsim.vms.Vm;
+import org.cloudbus.cloudsim.vms.network.NetworkVm;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
- * NetworkCloudlet class extends Cloudlet to support simulation of complex
- * applications. Each NetworkCloudlet represents a task of the application.
- * Each task consists of several tasks.
+ * NetworkCloudlet to support simulation of complex applications.
+ * Each application is compounded of one or more {@link CloudletTask}s
+ * for performing different kinds of processing.
  *
  * <p>
  * Please refer to following publication for more details:
@@ -37,7 +37,7 @@ import java.util.Optional;
  * @author Manoel Campos da Silva Filho
  * @since CloudSim Toolkit 1.0
  *
- * @TODO Check how to implement the NULL pattern for this class.
+ * TODO Check how to implement the NULL pattern for this class.
  */
 public class NetworkCloudlet extends CloudletSimple {
 
@@ -56,7 +56,7 @@ public class NetworkCloudlet extends CloudletSimple {
      * Creates a NetworkCloudlet with no priority and file size and output size equal to 1.
      *
      * @param length the length or size (in MI) of this cloudlet to be executed in a VM (check out {@link #setLength(long)})
-     * @param pesNumber the pes number
+     * @param pesNumber the number of PEs this Cloudlet requires
      */
     public NetworkCloudlet(final long length, final int pesNumber) {
         this(-1, length, pesNumber);
@@ -81,17 +81,15 @@ public class NetworkCloudlet extends CloudletSimple {
     }
 
     /**
-     *
-     * @return a read-only list of cloudlet's tasks.
+     * @return a read-only list of Cloudlet's tasks.
      */
     public List<CloudletTask> getTasks() {
         return Collections.unmodifiableList(tasks);
     }
 
     /**
-     * Gets the Cloudlet's RAM memory.
-     *
-     * @TODO Required, allocated, used memory? It doesn't appear to be used.
+     * Gets the Cloudlet's RAM memory (in Megabytes).
+     * TODO Required, allocated, used memory? It doesn't appear to be used.
      */
     public long getMemory() {
         return memory;
@@ -99,8 +97,8 @@ public class NetworkCloudlet extends CloudletSimple {
 
     /**
      * Sets the Cloudlet's RAM memory.
-     * @param memory amount of RAM to set
-     * @TODO Cloudlet has the {@link #getUtilizationModelRam()} that defines
+     * @param memory amount of RAM to set (in Megabytes)
+     * TODO Cloudlet has the {@link #getUtilizationModelRam()} that defines
      *       how RAM is used. This way, this attribute doesn't make sense
      *       since usage of RAM is dynamic.
      *       The attribute would be used to know what is the maximum
@@ -114,7 +112,7 @@ public class NetworkCloudlet extends CloudletSimple {
     }
 
     /**
-     * Checks if the some Cloudlet Task has started yet.
+     * Checks if some Cloudlet Task has started yet.
      *
      * @return true if some task has started, false otherwise
      */
@@ -130,15 +128,15 @@ public class NetworkCloudlet extends CloudletSimple {
      * @return true if the current task finished and the next one was started, false otherwise
      */
     public boolean startNextTaskIfCurrentIsFinished(final double nextTaskStartTime){
-        final Optional<CloudletTask> optional = getNextTaskIfCurrentIfFinished();
-        optional.ifPresent(task -> task.setStartTime(nextTaskStartTime));
-        return optional.isPresent();
+        return
+            getNextTaskIfCurrentIfFinished()
+                .map(task -> task.setStartTime(nextTaskStartTime))
+                .isPresent();
     }
 
     /**
      * Gets an {@link Optional} containing the current task
-     * or an {@link Optional#empty()}.
-     *
+     * or an {@link Optional#empty()} if there is no current task yet.
      * @return
      */
     public Optional<CloudletTask> getCurrentTask() {
@@ -153,8 +151,8 @@ public class NetworkCloudlet extends CloudletSimple {
      * Gets an {@link Optional} containing the next task in the list if the current task is finished.
      *
      * @return the next task if the current one is finished;
-     * otherwise an {@link Optional#empty()} if the current task is already the last one
-     * or it is not finished yet.
+     *         otherwise an {@link Optional#empty()} if the current task is already the last one,
+     *         or it is not finished yet.
      */
     private Optional<CloudletTask> getNextTaskIfCurrentIfFinished(){
         if(getCurrentTask().filter(CloudletTask::isActive).isPresent()) {
@@ -197,8 +195,25 @@ public class NetworkCloudlet extends CloudletSimple {
      * @return the NetworkCloudlet instance
      */
     public NetworkCloudlet addTask(final CloudletTask task) {
+        Objects.requireNonNull(task);
         task.setCloudlet(this);
         tasks.add(task);
         return this;
+    }
+
+    @Override
+    public NetworkVm getVm() {
+        return (NetworkVm)super.getVm();
+    }
+
+    @Override
+    public Cloudlet setVm(final Vm vm) {
+        if(vm == Vm.NULL)
+            return super.setVm(NetworkVm.NULL);
+
+        if(vm instanceof NetworkVm)
+            return super.setVm(vm);
+
+        throw new IllegalArgumentException("NetworkCloudlet can just be executed by a NetworkVm");
     }
 }

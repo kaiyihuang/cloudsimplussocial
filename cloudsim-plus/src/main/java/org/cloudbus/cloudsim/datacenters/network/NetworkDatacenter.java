@@ -8,10 +8,12 @@
 package org.cloudbus.cloudsim.datacenters.network;
 
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicy;
+import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicySimple;
 import org.cloudbus.cloudsim.core.Simulation;
 import org.cloudbus.cloudsim.datacenters.Datacenter;
 import org.cloudbus.cloudsim.datacenters.DatacenterSimple;
 import org.cloudbus.cloudsim.hosts.Host;
+import org.cloudbus.cloudsim.hosts.network.NetworkHost;
 import org.cloudbus.cloudsim.network.switches.EdgeSwitch;
 import org.cloudbus.cloudsim.network.switches.Switch;
 
@@ -22,9 +24,9 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 
 /**
- * NetworkDatacenter class is a {@link Datacenter} whose hostList are
- * virtualized and networked. It contains all the information about internal
- * network. For example, which VM is connected to what switch, etc.
+ * NetworkDatacenter class is a {@link Datacenter} whose hosts have network support.
+ * It contains all the information about internal network.
+ * For example, which VM is connected to what switch, etc.
  *
  * <p>Please refer to following publication for more details:
  * <ul>
@@ -41,34 +43,44 @@ import static java.util.stream.Collectors.toList;
  *
  * @author Saurabh Kumar Garg
  * @author Manoel Campos da Silva Filho
- *
  */
 public class NetworkDatacenter extends DatacenterSimple {
 
-    /**
-     * @see #getSwitchMap()
-     */
+    /** @see #getSwitchMap() */
     private final List<Switch> switchMap;
 
     /**
      * Creates a NetworkDatacenter with the given parameters.
      *
-     * @param simulation The CloudSim instance that represents the simulation the Entity is related to
+     * @param simulation The CloudSim instance that represents the simulation the Entity belongs to
      * @param hostList list of {@link Host}s that will compound the Datacenter
      * @param vmAllocationPolicy the policy to be used to allocate VMs into hosts
      *
-     * @throws IllegalArgumentException when this entity has zero number of PEs (Processing Elements).
-     * <br>
-     * No PEs mean the Cloudlets can't be processed. A CloudResource must
-     * contain one or more Machines. A Machine must contain one or more PEs.
+     * @throws IllegalArgumentException when this Host has zero number of PEs (Processing Elements).
      */
     public NetworkDatacenter(
         final Simulation simulation,
-        final List<? extends Host> hostList,
+        final List<? extends NetworkHost> hostList,
         final VmAllocationPolicy vmAllocationPolicy)
     {
-        super(simulation, hostList, vmAllocationPolicy);
+        this(simulation, hostList);
+        setVmAllocationPolicy(vmAllocationPolicy);
+    }
 
+    /**
+     * Creates a NetworkDatacenter that uses a {@link VmAllocationPolicySimple}
+     * as default.
+     *
+     * @param simulation The CloudSim instance that represents the simulation the Entity belongs to
+     * @param hostList list of {@link Host}s that will compound the Datacenter
+     *
+     * @throws IllegalArgumentException when this Host has zero number of PEs (Processing Elements).
+     */
+    public NetworkDatacenter(
+        final Simulation simulation,
+        final List<? extends NetworkHost> hostList)
+    {
+        super(simulation, hostList);
         switchMap = new ArrayList<>();
     }
 
@@ -94,10 +106,16 @@ public class NetworkDatacenter extends DatacenterSimple {
     }
 
     /**
-     * Gets a <b>read-only</b> list of network Datacenter's Switches.
+     * Gets a <b>read-only</b> list of network Datacenter's {@link Switch}es.
      * @return
      */
     public List<Switch> getSwitchMap() {
         return Collections.unmodifiableList(switchMap);
     }
+
+    @Override
+    public List<NetworkHost> getHostList() {
+        return super.getHostList();
+    }
+
 }

@@ -15,6 +15,9 @@
 package org.cloudbus.cloudsim.network;
 
 import org.cloudbus.cloudsim.core.Identifiable;
+import org.cloudbus.cloudsim.hosts.Host;
+import org.cloudbus.cloudsim.network.switches.Switch;
+import org.cloudbus.cloudsim.vms.Vm;
 
 /**
  * Defines the structure for a network packet.
@@ -22,8 +25,8 @@ import org.cloudbus.cloudsim.core.Identifiable;
  * @author Gokul Poduval
  * @author Chen-Khong Tham, National University of Singapore
  * @author Manoel Campos da Silva Filho
- * @param <T> the class of objects involved in the packet transmission,
- *           if they are Hosts, VMs, Switches, etc.
+ * @param <T> the class of objects involved in the packet transmission.
+ *           if they are {@link Host}s, {@link Vm}s, {@link Switch}es, etc.
  *
  * @since CloudSim Toolkit 1.0
  */
@@ -31,7 +34,7 @@ public interface NetworkPacket<T extends Identifiable> {
     /**
      * Gets the size of the packet in bytes.
      *
-     * @return
+     * @return size of the packet in bytes.
      */
     long getSize();
 
@@ -63,26 +66,26 @@ public interface NetworkPacket<T extends Identifiable> {
     void setDestination(T destination);
 
     /**
-     * Gets the time when the packet was sent.
+     * Gets the time (in seconds) when the packet was sent.
      * @return
      */
     double getSendTime();
 
     /**
      * Sets the time when the packet was sent.
-     * @param time the time to set
+     * @param time the time to set (in seconds)
      */
     void setSendTime(double time);
 
     /**
-     * Gets the time when the packet was received.
+     * Gets the time (in seconds) when the packet was received.
      * @return
      */
     double getReceiveTime();
 
     /**
      * Sets the time when the packet was received.
-     * @param time the time to set
+     * @param time the time to set (in seconds)
      */
     void setReceiveTime(double time);
 }

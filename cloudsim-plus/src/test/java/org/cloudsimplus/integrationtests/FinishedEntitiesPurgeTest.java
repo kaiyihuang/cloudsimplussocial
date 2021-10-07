@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -35,12 +35,9 @@ import org.cloudbus.cloudsim.hosts.Host;
 import org.cloudbus.cloudsim.hosts.HostSimple;
 import org.cloudbus.cloudsim.resources.Pe;
 import org.cloudbus.cloudsim.resources.PeSimple;
-import org.cloudbus.cloudsim.util.TimeUtil;
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelFull;
 import org.cloudbus.cloudsim.vms.Vm;
 import org.cloudbus.cloudsim.vms.VmSimple;
-import org.cloudsimplus.builders.tables.CloudletsTableBuilder;
-import org.cloudsimplus.builders.tables.TextTableColumn;
 import org.cloudsimplus.listeners.EventInfo;
 import org.cloudsimplus.util.Log;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * A integration test to assess the correctness of the simulation
+ * An integration test to assess the correctness of the simulation
  * after purging finished entities.
  * It creates a set of brokers, where each broker has the same number of VMs and cloudlets.
  * However, the 1st broker receives the same number of previous cloudlets
@@ -86,21 +83,20 @@ class FinishedEntitiesPurgeTest {
     private static final int VMS_BY_BROKER = HOSTS_NUMBER / BROKERS_NUMBER * 4;
     private static final int CLOUDLETS_BY_BROKER = VMS_BY_BROKER;
     private static final int HOST_MIPS = 1000;
-    private static final boolean SHOW_ONLY_CLOUDLETS_WITH_DIFFERENT_RESULTS = true;
 
     /**
-     * Total number of cloudlets created statically, before simulation start.
+     * Total number of cloudlets created statically, before simulation start,
+     * which are expected to finish.
      */
-    private static final double EXPECTED_TOTAL_STATIC_CLOUDLETS_FINISHED = 4000;
+    private static final double STATIC_CLOUDLETS_TO_FINISH = 4000;
 
     /**
      * The maximum accepted difference in time results.
      */
-    public static final double MAX_TIME_DELTA = 0.25;
+    private static final double MAX_TIME_DELTA = 0.25;
 
     private CloudSim simulation;
     private List<DatacenterBroker> brokerList;
-    private Datacenter datacenter0;
 
     private long lastVmId;
     private long lastCloudletId;
@@ -122,7 +118,7 @@ class FinishedEntitiesPurgeTest {
     void staticCloudletExecTimeEqualFinishTime() {
         final Stream<Executable> executables =
             getAllBrokersCloudletStream()
-                .filter(cl -> cl.getId() < EXPECTED_TOTAL_STATIC_CLOUDLETS_FINISHED)
+                .filter(cl -> cl.getId() < STATIC_CLOUDLETS_TO_FINISH)
                 .map(cl -> () -> assertExecTimeEqualsToFinishTime(cl));
 
         assertAll(executables);
@@ -145,7 +141,7 @@ class FinishedEntitiesPurgeTest {
     void dynamicCloudletExecTimeEqualStartTime() {
         final Stream<Executable> executables =
             getAllBrokersCloudletStream()
-                .filter(cl -> cl.getId() >= EXPECTED_TOTAL_STATIC_CLOUDLETS_FINISHED)
+                .filter(cl -> cl.getId() >= STATIC_CLOUDLETS_TO_FINISH)
                 .map(cl -> () -> assertExecTimeEqualsToStartTime(cl));
 
         assertAll(executables);
@@ -174,7 +170,7 @@ class FinishedEntitiesPurgeTest {
      * */
     private void assertCloudletFinishTime(final Cloudlet cl) {
         final long brokerOrder = getBrokerOrder(cl);
-        final double expectedCloudletFinishTime = brokerOrder + (cl.getId() < EXPECTED_TOTAL_STATIC_CLOUDLETS_FINISHED ? 0 : brokerOrder);
+        final double expectedCloudletFinishTime = brokerOrder + (cl.getId() < STATIC_CLOUDLETS_TO_FINISH ? 0 : brokerOrder);
         assertEquals(
             expectedCloudletFinishTime,
             cl.getFinishTime(), 0.7,
@@ -196,7 +192,7 @@ class FinishedEntitiesPurgeTest {
     }
 
     private void assertCloudletStartTime(final Cloudlet cl) {
-        final double expectedCloudletStartTime = cl.getId() < EXPECTED_TOTAL_STATIC_CLOUDLETS_FINISHED ? 0 : getBrokerOrder(cl);
+        final double expectedCloudletStartTime = cl.getId() < STATIC_CLOUDLETS_TO_FINISH ? 0 : getBrokerOrder(cl);
         assertEquals(
             expectedCloudletStartTime,
             cl.getExecStartTime(), MAX_TIME_DELTA,
@@ -242,65 +238,16 @@ class FinishedEntitiesPurgeTest {
 
     private void buildAndStartSimulation() {
         Log.setLevel(Level.WARN);
-        final double startTime = TimeUtil.currentTimeSecs();
-
         simulation = new CloudSim();
-        datacenter0 = createDatacenter();
+        createDatacenter();
         createBrokers();
         simulation.addOnClockTickListener(this::onClockTickListener);
         simulation.start();
-
-        final double endTimeSec = TimeUtil.elapsedSeconds(startTime);
-        System.out.printf(
-            "%nFinished %s. Simulated time: %s (%.2f secs). Actual execution time: %s%n",
-            getClass().getSimpleName(), TimeUtil.secondsToStr(simulation.clock()),
-            simulation.clock(), TimeUtil.secondsToStr(endTimeSec));
-    }
-
-    private void printFinishedCloudlets() {
-        for (final DatacenterBroker b : brokerList) {
-            final List<Cloudlet> list = SHOW_ONLY_CLOUDLETS_WITH_DIFFERENT_RESULTS ?
-                                            getFinishedCloudletsWithDifferentResults(b) :
-                                            b.getCloudletFinishedList();
-            new CloudletsTableBuilder(list)
-                .setTitle(String.format("%s/%d :: %d Cloudlets", b, brokerList.size(), b.getCloudletFinishedList().size()))
-                .column(5, col -> col.setTitle("   VM"))
-                .removeColumn(11)
-                .removeColumn(10)
-                .removeColumn(8)
-                .removeColumn(6)
-                .removeColumn(4)
-                .removeColumn(2)
-                .addColumn(new TextTableColumn("FinishTime"), cl -> String.format("%.2f", cl.getFinishTime()))
-                .addColumn(new TextTableColumn("ExecTime"), cl -> (int)Math.floor(cl.getActualCpuTime()))
-                .build();
-        }
-    }
-
-    /**
-     * Gets only the cloudlets having different execution times,
-     * so that it reduces the number of results for cloudlets
-     * having the exact values for those times.
-     * @param b
-     * @return
-     */
-    private List<Cloudlet> getFinishedCloudletsWithDifferentResults(DatacenterBroker b) {
-        Cloudlet last = Cloudlet.NULL;
-        final List<Cloudlet> list = new ArrayList<>();
-        for (final Cloudlet cl : b.getCloudletFinishedList()) {
-           if(cl.getExecStartTime() != last.getExecStartTime()
-           && cl.getFinishTime() != last.getFinishTime()
-           && cl.getActualCpuTime() != last.getActualCpuTime()) {
-               list.add(cl);
-               last = cl;
-           }
-        }
-        return list;
     }
 
     private void onClockTickListener(final EventInfo evt) {
         //The statically submitted cloudlets for the first broker finish in 1 second
-        final DatacenterBroker broker0 = brokerList.get(0);
+        final var broker0 = brokerList.get(0);
         if(evt.getTime() >= SCHEDULING_INTERVAL_SECS && !dynamicCloudletsSubmitted){
             dynamicCloudletsSubmitted = true;
             createCloudlets(broker0, BASE_CLOUDLET_LENGTH);
@@ -312,7 +259,6 @@ class FinishedEntitiesPurgeTest {
 
         final int entitiesNumber = simulation.getEntityList().size();
         if(entitiesNumber != previousEntitiesNumber){
-            System.out.printf("Simulation time %s :: %d current entities%n", simulation.clockStr(), entitiesNumber);
             this.previousEntitiesNumber = entitiesNumber;
         }
     }
@@ -341,16 +287,16 @@ class FinishedEntitiesPurgeTest {
     }
 
     private void createVmsAndCloudlets(final DatacenterBroker broker) {
-        final List<Vm> vmList = createVms(broker);
+        final var vmList = createVms(broker);
         final long length = BASE_CLOUDLET_LENGTH * brokerList.size();
         final List<Cloudlet> cloudlets = vmList.stream().map(vm -> createCloudlet(vm, length)).collect(Collectors.toList());
         broker.submitCloudletList(cloudlets);
     }
 
     private Datacenter createDatacenter() {
-        final List<Host> hostList = new ArrayList<>(HOSTS_NUMBER);
+        final var hostList = new ArrayList<Host>(HOSTS_NUMBER);
         for(int i = 0; i < HOSTS_NUMBER; i++) {
-            Host host = createHost();
+            final var host = createHost();
             hostList.add(host);
         }
 
@@ -359,8 +305,8 @@ class FinishedEntitiesPurgeTest {
 
     private Host createHost() {
         final List<Pe> peList = IntStream.range(0, HOST_PES)
-                                         .mapToObj(i -> new PeSimple(HOST_MIPS))
-                                         .collect(toCollection(() -> new ArrayList<>(HOST_PES)));
+                                    .mapToObj(i -> new PeSimple(HOST_MIPS))
+                                    .collect(toCollection(() -> new ArrayList<>(HOST_PES)));
 
         final long ram = 2048; //in Megabytes
         final long bw = 10000; //in Megabits/s
@@ -370,12 +316,12 @@ class FinishedEntitiesPurgeTest {
     }
 
     private List<Vm> createVms(final DatacenterBroker broker) {
-        final List<Vm> list = IntStream.range(0, VMS_BY_BROKER)
-                                       .mapToObj(i -> createVm())
-                                       .collect(toCollection(() -> new ArrayList<>(VMS_BY_BROKER)));
+        final var vmList = IntStream.range(0, VMS_BY_BROKER)
+                                    .mapToObj(i -> createVm())
+                                    .collect(toCollection(() -> new ArrayList<>(VMS_BY_BROKER)));
 
-        broker.submitVmList(list);
-        return list;
+        broker.submitVmList(vmList);
+        return vmList;
     }
 
     private Vm createVm() {
@@ -389,15 +335,15 @@ class FinishedEntitiesPurgeTest {
     }
 
     private void createCloudlets(final DatacenterBroker broker, final Vm vm, final long length) {
-        final List<Cloudlet> list = IntStream.range(0, CLOUDLETS_BY_BROKER)
-                                             .mapToObj(i -> createCloudlet(vm, length))
-                                             .collect(toCollection(() -> new ArrayList<>(CLOUDLETS_BY_BROKER)));
+        final var cloudletList = IntStream.range(0, CLOUDLETS_BY_BROKER)
+                                          .mapToObj(i -> createCloudlet(vm, length))
+                                          .collect(toCollection(() -> new ArrayList<>(CLOUDLETS_BY_BROKER)));
 
-        broker.submitCloudletList(list);
+        broker.submitCloudletList(cloudletList);
     }
 
     private Cloudlet createCloudlet(final Vm vm, final long length) {
-        final Cloudlet cloudlet = new CloudletSimple(lastCloudletId++, length, CLOUDLET_PES);
+        final var cloudlet = new CloudletSimple(lastCloudletId++, length, CLOUDLET_PES);
         cloudlet.setUtilizationModel(new UtilizationModelFull()).setSizes(1024).setVm(vm);
         return cloudlet;
     }

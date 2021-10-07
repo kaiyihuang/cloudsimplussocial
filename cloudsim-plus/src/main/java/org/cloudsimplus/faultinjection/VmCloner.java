@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -26,8 +26,6 @@ package org.cloudsimplus.faultinjection;
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.vms.Vm;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -37,7 +35,7 @@ import java.util.function.UnaryOperator;
  * Enables cloning a {@link Vm} which was destroyed
  * due to a {@link HostFaultInjection Host Failure}.
  * It provides all the features to clone a Vm, simulating
- * the creating of another Vm from an snapshot of the failed one.
+ * the creating of another Vm from a snapshot of the failed one.
  * It also enables re-creating Cloudlets which were running
  * inside the failed VM.
  *
@@ -45,15 +43,7 @@ import java.util.function.UnaryOperator;
  * @since CloudSim Plus 1.2.3
  */
 public interface VmCloner {
-    VmCloner NULL = new VmCloner() {
-        @Override public int getClonedVmsNumber() { return 0;}
-        @Override public Map.Entry<Vm, List<Cloudlet>> clone(Vm sourceVm) { return new HashMap.SimpleEntry<>(Vm.NULL, Collections.EMPTY_LIST); }
-        @Override public VmCloner setVmClonerFunction(UnaryOperator<Vm> vmClonerFunction) { return this; }
-        @Override public VmCloner setCloudletsClonerFunction(Function<Vm, List<Cloudlet>> cloudletsClonerFunction) { return this; }
-        @Override public int getMaxClonesNumber() { return 0; }
-        @Override public boolean isMaxClonesNumberReached() { return false; }
-        @Override public VmCloner setMaxClonesNumber(int maxClonesNumber) { return this; }
-    };
+    VmCloner NULL = new VmClonerNull();
 
     /**
      * Gets the number of VMs cloned so far.
@@ -112,10 +102,21 @@ public interface VmCloner {
     int getMaxClonesNumber();
 
     /**
+     * Sets the maximum number of Vm clones to create.
+     * For instance, if this value is equal to 2,
+     * it means if all VMs from a given broker are destroyed multiple times,
+     * a clone will be created only 2 times. If all VMs are destroyed again
+     * for the 3rd time, no clone will be created.
+     * The default value is 1.
+     *
+     * @param maxClonesNumber the value to set
+     * @return
+     */
+    VmCloner setMaxClonesNumber(int maxClonesNumber);
+
+    /**
      * Checks if the maximum number of Vm clones to be created was reached.
      * @return true if the maximum number of clones was reached, false otherwise
      */
     boolean isMaxClonesNumberReached();
-
-    VmCloner setMaxClonesNumber(int maxClonesNumber);
 }

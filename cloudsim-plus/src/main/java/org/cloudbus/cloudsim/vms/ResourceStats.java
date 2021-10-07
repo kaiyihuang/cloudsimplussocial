@@ -1,3 +1,26 @@
+/*
+ * CloudSim Plus: A modern, highly-extensible and easier-to-use Framework for
+ * Modeling and Simulation of Cloud Computing Infrastructures and Services.
+ * http://cloudsimplus.org
+ *
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
+ *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
+ *
+ *     This file is part of CloudSim Plus.
+ *
+ *     CloudSim Plus is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CloudSim Plus is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cloudbus.cloudsim.vms;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
@@ -8,14 +31,14 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Computes statistics about {@link Resource} utilization for a given machine (VM or Host).
- * Such a resource can be, for instance, CPU, RAM or BW.
+ * A base class for computing statistics about {@link Resource} utilization
+ * for a given machine (VM or Host). Such a resource can be, for instance, CPU, RAM or BW.
  *
  * @param <T> The kind of machine to collect resource utilization statistics
  * @author Manoel Campos da Silva Filho
  * @since CloudSim Plus 6.1.0
  */
-public abstract class AbstractResourceStats<T extends AbstractMachine> {
+public class ResourceStats<T extends AbstractMachine> {
     private final Function<T, Double> resourceUtilizationFunction;
     private final T machine;
     private final SummaryStatistics stats;
@@ -28,7 +51,7 @@ public abstract class AbstractResourceStats<T extends AbstractMachine> {
      * @param resourceUtilizationFunction a {@link Function} that receives a Machine
      *                                    and returns the current resource utilization for that machine
      */
-    public AbstractResourceStats(final T machine, final Function<T, Double> resourceUtilizationFunction){
+    protected ResourceStats(final T machine, final Function<T, Double> resourceUtilizationFunction){
         this.resourceUtilizationFunction = Objects.requireNonNull(resourceUtilizationFunction);
         this.machine = Objects.requireNonNull(machine);
         this.stats = new SummaryStatistics();
@@ -38,7 +61,7 @@ public abstract class AbstractResourceStats<T extends AbstractMachine> {
      * Collects the current resource utilization percentage (in scale from 0 to 1)
      * for the given time to the statistics.
      * @param time current simulation time
-     * @returnn true if data was collected, false otherwise (meaning it's not time to collect data).
+     * @return true if data was collected, false otherwise (meaning it's not time to collect data).
      */
     public boolean add(final double time) {
         try {

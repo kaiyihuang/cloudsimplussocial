@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An utility class to enable changing logging
+ * A utility class to enable changing logging
  * configuration such as the logging level.
  *
  * @since CloudSim Plus 3.0.0
@@ -49,11 +49,9 @@ public final class Log {
      * @param level the logging level to set
      */
     public static void setLevel(final Logger logger, final Level level) {
-        if(!(logger instanceof ch.qos.logback.classic.Logger)) {
-            throw new IllegalArgumentException("The logger must be and instance of " + ch.qos.logback.classic.Logger.class.getName());
-        }
-
-        ((ch.qos.logback.classic.Logger) logger).setLevel(level);
+        if (logger instanceof ch.qos.logback.classic.Logger logback)
+            logback.setLevel(level);
+        else throw new IllegalArgumentException("The logger must be and instance of " + ch.qos.logback.classic.Logger.class.getName());
     }
 
     /**

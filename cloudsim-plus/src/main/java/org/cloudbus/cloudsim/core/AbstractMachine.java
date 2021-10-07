@@ -1,3 +1,26 @@
+/*
+ * CloudSim Plus: A modern, highly-extensible and easier-to-use Framework for
+ * Modeling and Simulation of Cloud Computing Infrastructures and Services.
+ * http://cloudsimplus.org
+ *
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
+ *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
+ *
+ *     This file is part of CloudSim Plus.
+ *
+ *     CloudSim Plus is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CloudSim Plus is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cloudbus.cloudsim.core;
 
 import org.cloudbus.cloudsim.hosts.Host;
@@ -22,14 +45,14 @@ public interface AbstractMachine<T extends Resource> extends ChangeableId, Resou
     AbstractMachine NULL = new AbstractMachineNull();
 
     /**
-     * Gets the machine bandwidth (bw) capacity in Megabits/s.
+     * Gets a resource representing the machine bandwidth (bw) in Megabits/s.
      *
-     * @return the machine bw capacity
+     * @return the machine bw resource
      */
     Resource getBw();
 
     /**
-     * Gets the machine memory resource in Megabytes.
+     * Gets a resource representing the machine memory in Megabytes.
      *
      * @return the machine memory
      */
@@ -51,8 +74,8 @@ public interface AbstractMachine<T extends Resource> extends ChangeableId, Resou
     long getNumberOfPes();
 
     /**
-     * Gets the individual MIPS capacity of any machine's {@link Pe}, considering that all
-     * PEs have the same capacity.
+     * Gets the individual MIPS capacity of any machine's {@link Pe},
+     * considering that all PEs have the same capacity.
      *
      * @return the MIPS capacity of a single {@link Pe}
      */
@@ -66,7 +89,7 @@ public interface AbstractMachine<T extends Resource> extends ChangeableId, Resou
     double getTotalMipsCapacity();
 
     /**
-     * Gets the CloudSim instance that represents the simulation the Entity is related to.
+     * Gets the CloudSim instance that represents the simulation the Entity belongs to.
      * @return
      */
     Simulation getSimulation();
@@ -97,7 +120,7 @@ public interface AbstractMachine<T extends Resource> extends ChangeableId, Resou
      *             any operation when the machine becomes idle (for instance,
      *             if idle machines might be shut down and a negative value is given,
      *             they won't).
-     * @return true if the Machine has been idle as long as the given time,
+     * @return true if the Machine has been idle as long as the given time;
      *         false if it's active of isn't idle long enough
      */
     default boolean isIdleEnough(final double time) {

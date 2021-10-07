@@ -10,6 +10,7 @@ import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.cloudlets.CloudletExecution;
 import org.cloudbus.cloudsim.schedulers.vm.VmScheduler;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -65,7 +66,6 @@ import java.util.List;
  * <p><b>WARNING</b>: Time-shared schedulers drastically degrade performance
  * of large scale simulations.</p>
  *
- *
  * @author Rodrigo N. Calheiros
  * @author Anton Beloglazov
  * @author Manoel Campos da Silva Filho
@@ -74,6 +74,8 @@ import java.util.List;
  * @see CloudletSchedulerSpaceShared
  */
 public class CloudletSchedulerTimeShared extends CloudletSchedulerAbstract {
+    @Serial
+    private static final long serialVersionUID = 2115862129708036038L;
 
     /**
      * {@inheritDoc}
@@ -126,5 +128,4 @@ public class CloudletSchedulerTimeShared extends CloudletSchedulerAbstract {
     protected boolean canExecuteCloudletInternal(final CloudletExecution cloudlet) {
         return true;
     }
-
 }

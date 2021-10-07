@@ -23,6 +23,27 @@ import java.util.Objects;
  * @since CloudSim Plus 6.0.0
  */
 public class PowerModelHostSpec extends PowerModelHost {
+    /**
+     * Since {@link #powerSpec} represents the power consumption data
+     * according to CPU utilization, as shorter the size of such a List,
+     * less accurate is the power consumption according to CPU utilization.
+     * Check mentioned attribute for details.
+     * Less than 2 entries doesn't make any sense,
+     * since for any CPU utilization, the power consumption will be the same.
+     */
+    public static final int MIN_POWER_CONSUMPTION_DATA_SIZE = 2;
+
+    /**
+     * A List where each element represents the
+     * power consumption (in Watts) of the entity for specific
+     * CPU utilization percentage.
+     * If the list has 10 items, each element represents
+     * the power consumption for 10% of CPU utilization.
+     * This way, the 1st item represents the power consumption for 10% of CPU utilization,
+     * the 2nd for 20% of CPU utilization and so on.
+     * If the list has 100 itens, each item represents the power consumption for 1% of
+     * CPU utilization and so no.
+     */
     private final List<Double> powerSpec;
 
     /**
@@ -31,12 +52,14 @@ public class PowerModelHostSpec extends PowerModelHost {
      * CPU utilization percentages.
      *
      * @param powerSpec a list where each element represents the
-     * power consumption of the entity for specific
-     * CPU utilization percentage.
-     * The index of the list represents
-     * the CPU utilization percentage and the
-     * value, the power consumption for that
-     * percentage.
+     *                  power consumption (in Watts) of the entity for specific
+     *                  CPU utilization percentage.
+     *                  If the list has 10 items, each element represents
+     *                  the power consumption for 10% of CPU utilization.
+     *                  This way, the 1st item represents the power consumption for 10% of CPU utilization,
+     *                  the 2nd for 20% of CPU utilization and so on.
+     *                  If the list has 100 itens, each item represents the power consumption for 1% of
+     *                  CPU utilization and so no.
      *
      * <p>If there are 100 elements in this list,
      * element at position 1 represents the power consumption
@@ -51,13 +74,17 @@ public class PowerModelHostSpec extends PowerModelHost {
      * when CPU utilization is between [0 .. 10%].</p>
      */
     public PowerModelHostSpec(final List<Double> powerSpec) {
+        super();
         Objects.requireNonNull(powerSpec, "powerSpec cannot be null");
-        if (powerSpec.size() >= 2) {
-            throw new IllegalArgumentException("powerSpec has to contain at least 2 elements " +
-                "(utilizazion at 0% and 100% load)");
+        if (powerSpec.size() >= MIN_POWER_CONSUMPTION_DATA_SIZE) {
+            this.powerSpec = powerSpec;
+            return;
         }
 
-        this.powerSpec = powerSpec;
+        final var msg =
+            String.format("powerSpec has to contain at least %d elements (representing utilization at 0%% and 100%% load, respectively)",
+                MIN_POWER_CONSUMPTION_DATA_SIZE);
+        throw new IllegalArgumentException(msg);
     }
 
     @Override
@@ -70,7 +97,7 @@ public class PowerModelHostSpec extends PowerModelHost {
 
     @Override
     public double getPower(final double utilizationFraction) throws IllegalArgumentException {
-        int utilizationIndex = (int) Math.round(utilizationFraction * powerSpec.size());
+        final int utilizationIndex = (int) Math.round(utilizationFraction * powerSpec.size());
         return powerSpec.get(utilizationIndex);
     }
 }

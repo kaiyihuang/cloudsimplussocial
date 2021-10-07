@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -30,6 +30,7 @@ import org.cloudbus.cloudsim.resources.Pe;
 import org.cloudbus.cloudsim.schedulers.MipsShare;
 import org.cloudbus.cloudsim.util.MathUtil;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -52,7 +53,7 @@ import static java.util.stream.Collectors.toList;
  * <p>
  * It is a basic implementation that covers the following features:
  * <ul>
- *     <li>Defines a general runqueue (the waiting list which defines which Cloudlets to run next) for all CPU cores ({@link Pe}) instead
+ *     <li>Defines a general run-queue (the waiting list which defines which Cloudlets to run next) for all CPU cores ({@link Pe}) instead
  *     of one for each core. More details in the listing below.
  *     </li>
  *     <li>Computes process ({@link Cloudlet}) niceness based on its priority: {@code niceness = -priority}.
@@ -60,10 +61,10 @@ import static java.util.stream.Collectors.toList;
  *     Lower niceness (negative values) represents higher priority and consequently higher weight, while
  *     higher niceness (positive values) represent lower priority and lower weight.
  *     </li>
- *     <li>Computes process timeslice based on its weight, that in turn is computed based on its niceness.
- *     The timeslice is the amount of time that a process is allowed to use the CPU before be preempted to make
+ *     <li>Computes process time-slice based on its weight, that in turn is computed based on its niceness.
+ *     The time-slice is the amount of time that a process is allowed to use the CPU before be preempted to make
  *     room for other process to run.
- *     The CFS scheduler uses a dynamic defined timeslice.
+ *     The CFS scheduler uses a dynamic defined time-slice.
  *     </li>
  * </ul>
  *
@@ -77,7 +78,7 @@ import static java.util.stream.Collectors.toList;
  *
  *     <li>Since this scheduler does not consider
  *     <a href="https://en.wikipedia.org/wiki/Context_switch">context switch</a>
- *     overhead, there is only one runqueue (waiting list) for all CPU cores because
+ *     overhead, there is only one run-queue (waiting list) for all CPU cores because
  *     each application is not in fact assigned to a specific CPU core.
  *     The scheduler just computes how much computing power (in MIPS)
  *     and number of cores each application can use and that MIPS capacity
@@ -88,7 +89,7 @@ import static java.util.stream.Collectors.toList;
  *     that can be run), it doesn't matter which PEs are "running" the application.
  *     </li>
  *	   <li>It doesn't use a Red-Black tree (such as the TreeSet), as in real implementations of CFS,
- *	   to sort waiting Cloudlets (runqueue list) increasingly, based on their virtual runtime (vruntime or VRT)
+ *	   to sort waiting Cloudlets (run-queue list) increasingly, based on their virtual runtime (vruntime or VRT)
  *	   (placing the Cloudlets that have run the least at the top of the tree).
  *	   Furthermore, the use of such a data structure added some complexity to the implementation.
  *	   Since different Cloudlets may have the same virtual runtime, this introduced some issues when adding or
@@ -102,9 +103,11 @@ import static java.util.stream.Collectors.toList;
  *     <b>NOTES:</b>
  *     <ul>
  *         <li>The time interval for updating cloudlets execution in this scheduler is not primarily defined by the
- *         {@link Datacenter#getSchedulingInterval()}, but by the {@link #computeCloudletTimeSlice(CloudletExecution) timeslice}
- *         computed based on the defined {@link #getLatency()}. Each time the computed timeslice is greater than
- *         the Datacenter scheduling interval, then the next update of Cloudlets processing will follow the {@link Datacenter#getSchedulingInterval()}.
+ *         {@link Datacenter#getSchedulingInterval()}, but by the
+ *         {@link #computeCloudletTimeSlice(CloudletExecution) timeslice}
+ *         computed based on the defined {@link #getLatency()}. Each time the computed time-slice is greater than
+ *         the Datacenter scheduling interval, then the next update of Cloudlets processing will follow
+ *         the {@link Datacenter#getSchedulingInterval()}.
  *         </li>
  *         <li>The implementation was based on the book of Robert Love: Linux Kernel Development, 3rd ed. Addison-Wesley, 2010
  *         and some other references listed below.
@@ -124,7 +127,10 @@ import static java.util.stream.Collectors.toList;
  * @see <a href="https://oakbytes.wordpress.com/linux-scheduler/">Linux Scheduler FAQ</a>
  */
 public final class CloudletSchedulerCompletelyFair extends CloudletSchedulerTimeShared {
-	/**
+    @Serial
+    private static final long serialVersionUID = 9077807080812191007L;
+
+    /**
 	 * @see #getMinimumGranularity()
 	 */
 	private int minimumGranularity = 2;
@@ -211,9 +217,9 @@ public final class CloudletSchedulerCompletelyFair extends CloudletSchedulerTime
 	 * @see #getCloudletWeight(CloudletExecution)
 	 * @see #getWeightSumOfRunningCloudlets()
 	 */
-	protected double computeCloudletTimeSlice(final CloudletExecution cloudlet){
-		final double timeslice = getLatency() * getCloudletWeightPercentBetweenAllCloudlets(cloudlet);
-		return Math.min(timeslice, getMinimumGranularity());
+	private double computeCloudletTimeSlice(final CloudletExecution cloudlet){
+		final double timeSlice = getLatency() * getCloudletWeightPercentBetweenAllCloudlets(cloudlet);
+		return Math.min(timeSlice, getMinimumGranularity());
 	}
 
     /**
@@ -262,7 +268,7 @@ public final class CloudletSchedulerCompletelyFair extends CloudletSchedulerTime
 	 * @return the cloudlet weight to use PEs
      * @see #getCloudletNiceness(CloudletExecution)
 	 */
-	protected double getCloudletWeight(final CloudletExecution cloudlet){
+    private double getCloudletWeight(final CloudletExecution cloudlet){
 		return 1024.0/(Math.pow(1.25, getCloudletNiceness(cloudlet)));
 	}
 
@@ -277,7 +283,7 @@ public final class CloudletSchedulerCompletelyFair extends CloudletSchedulerTime
      * @return the cloudlet niceness
      * @see <a href="http://man7.org/linux/man-pages/man1/nice.1.html">Man Pages: Nice values for Linux processes</a>
      */
-    protected double getCloudletNiceness(final CloudletExecution cloudlet){
+    private double getCloudletNiceness(final CloudletExecution cloudlet){
         return -cloudlet.getCloudlet().getPriority();
     }
 

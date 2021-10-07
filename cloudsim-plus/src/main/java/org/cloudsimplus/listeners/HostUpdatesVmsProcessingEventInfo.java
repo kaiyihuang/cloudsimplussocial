@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -50,13 +50,13 @@ public interface HostUpdatesVmsProcessingEventInfo extends HostEventInfo  {
      * @param host the {@link Host} where the event happened
      * @param nextCloudletCompletionTime the expected time for completion of the next {@link Cloudlet}
      */
-    static HostUpdatesVmsProcessingEventInfo of(final EventListener<? extends EventInfo> listener, final Host host, final double nextCloudletCompletionTime) {
+    static HostUpdatesVmsProcessingEventInfo of(final EventListener<HostUpdatesVmsProcessingEventInfo> listener, final Host host, final double nextCloudletCompletionTime) {
         final double time = host.getSimulation().clock();
         return new HostUpdatesVmsProcessingEventInfo() {
             @Override public double getNextCloudletCompletionTime() { return nextCloudletCompletionTime; }
             @Override public Host getHost() { return host; }
             @Override public double getTime() { return time; }
-            @Override public EventListener<? extends EventInfo> getListener() { return listener; }
+            @Override public EventListener<HostUpdatesVmsProcessingEventInfo> getListener() { return listener; }
         };
     }
 }

@@ -16,8 +16,7 @@ import java.util.Objects;
 
 /**
  * Cloudlet implements the basic features of an application/job/task to be executed
- * by a {@link Vm} on behalf of a given user. It stores, despite all the
- * information encapsulated in the Cloudlet, the ID of the VM running it.
+ * by a {@link Vm} on behalf of a given user.
  *
  * @author Rodrigo N. Calheiros
  * @author Anton Beloglazov
@@ -26,13 +25,16 @@ import java.util.Objects;
  */
 public class CloudletSimple extends CloudletAbstract {
     /**
-     * Creates a Cloudlet with no priority or id. The id is defined when the Cloudlet is submitted to
+     * Creates a Cloudlet with no priority or id.
+     * The id is defined when the Cloudlet is submitted to
      * a {@link DatacenterBroker}. The file size and output size is defined as 1.
      *
-     * @param length the length or size (in MI) of this cloudlet to be executed in a VM (check out {@link #setLength(long)})
+     * @param length the length or size (in MI) of this cloudlet to be executed in a VM
+     *               (check out {@link #setLength(long)})
      * @param pesNumber number of PEs that Cloudlet will require
      * @param utilizationModel a {@link UtilizationModel} to define how the Cloudlet uses CPU, RAM and BW.
-     *                         To define an independent utilization model for each resource, call the respective setters.
+     *                         To define an independent utilization model for each resource,
+     *                         call the respective setters.
      *
      * @see #setUtilizationModelCpu(UtilizationModel)
      * @see #setUtilizationModelRam(UtilizationModel)
@@ -43,30 +45,34 @@ public class CloudletSimple extends CloudletAbstract {
     }
 
     /**
-     * Creates a Cloudlet with no priority or id. The id is defined when the Cloudlet is submitted to
+     * Creates a Cloudlet with no priority or id.
+     * The id is defined when the Cloudlet is submitted to
      * a {@link DatacenterBroker}. The file size and output size is defined as 1.
      *
      * <p><b>NOTE:</b> By default, the Cloudlet will use a {@link UtilizationModelFull} to define
      * CPU utilization and a {@link UtilizationModel#NULL} for RAM and BW.
      * To change the default values, use the respective setters.</p>
      *
-     * @param length the length or size (in MI) of this cloudlet to be executed in a VM (check out {@link #setLength(long)})
-     * @param pesNumber      number of PEs that Cloudlet will require
+     * @param length the length or size (in MI) of this cloudlet to be executed in a VM
+     *               (check out {@link #setLength(long)})
+     * @param pesNumber number of PEs that Cloudlet will require
      */
     public CloudletSimple(final long length, final int pesNumber) {
         super(length, pesNumber);
     }
 
     /**
-     * Creates a Cloudlet with no priority or id. The id is defined when the Cloudlet is submitted to
+     * Creates a Cloudlet with no priority or id.
+     * The id is defined when the Cloudlet is submitted to
      * a {@link DatacenterBroker}. The file size and output size is defined as 1.
      *
      * <p><b>NOTE:</b> By default, the Cloudlet will use a {@link UtilizationModelFull} to define
      * CPU utilization and a {@link UtilizationModel#NULL} for RAM and BW.
      * To change the default values, use the respective setters.</p>
      *
-     * @param length the length or size (in MI) of this cloudlet to be executed in a VM (check out {@link #setLength(long)})
-     * @param pesNumber      number of PEs that Cloudlet will require
+     * @param length the length or size (in MI) of this cloudlet to be executed in a VM
+     *               (check out {@link #setLength(long)})
+     * @param pesNumber number of PEs that Cloudlet will require
      */
     public CloudletSimple(final long length, final long pesNumber) {
         super(length, pesNumber);
@@ -80,7 +86,8 @@ public class CloudletSimple extends CloudletAbstract {
      * To change the default values, use the respective setters.</p>
      *
      * @param id  the unique ID of this cloudlet
-     * @param length the length or size (in MI) of this cloudlet to be executed in a VM (check out {@link #setLength(long)})
+     * @param length the length or size (in MI) of this cloudlet to be executed in a VM
+     *               (check out {@link #setLength(long)})
      * @param pesNumber the pes number
      */
     public CloudletSimple(final long id, final long length, final long pesNumber) {
@@ -95,26 +102,17 @@ public class CloudletSimple extends CloudletAbstract {
     /**
      * Compare this Cloudlet with another one based on {@link #getLength()}.
      *
-     * @param o the Cloudlet to compare to
+     * @param other the Cloudlet to compare to
      * @return {@inheritDoc}
      */
     @Override
-    public int compareTo(final Cloudlet o) {
-        if(this.equals(Objects.requireNonNull(o))) {
+    public int compareTo(final Cloudlet other) {
+        if(this.equals(Objects.requireNonNull(other))) {
             return 0;
         }
 
-        return Double.compare(getLength(), o.getLength()) +
-            Long.compare(this.getId(), o.getId()) +
-            this.getBroker().compareTo(o.getBroker());
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        //Appropriated hashCode() is implemented by superclass
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final CloudletSimple other = (CloudletSimple) o;
-        return other.getId() == getId() && getBroker().equals(other.getBroker());
+        return Double.compare(getLength(), other.getLength()) +
+            Long.compare(this.getId(), other.getId()) +
+            this.getBroker().compareTo(other.getBroker());
     }
 }

@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -30,20 +30,21 @@ import org.cloudsimplus.autoscaling.VerticalVmScaling;
 import java.util.function.Function;
 
 /**
- * A {@link ResourceScaling} for which the capacity of the resource to be scaled will be instantaneously
- * resized to move the Vm from the under or overload state.
+ * A {@link ResourceScaling} for which the capacity of the resource to be scaled will be
+ * instantaneously resized to move the Vm from the under or overload state.
  * This way, the SLA violation time will be reduced.
  *
  * <p>This scaling type will resize the resource capacity in the following way:
  * <ul>
- *     <li>in underload conditions: it decreases the resource capacity to be equal to the current load of the resource
- *     being scaled;</li>
- *     <li>in overload conditions: it increases the resource capacity to be equal to the current load of the resource
- *     being scaled.</li>
+ *     <li>in underload conditions: it decreases the resource capacity to be equal to
+ *     the current load of the resource being scaled;</li>
+ *     <li>in overload conditions: it increases the resource capacity to be equal to
+ *     the current load of the resource being scaled.</li>
  * </ul>
  *
- * Finally it adds an extra amount of resource, defined by the {@link VerticalVmScaling#getScalingFactor() scaling factor},
- * for safety. This extra amount added is to enable the resource usage to grow up to the scaling factor
+ * Finally it adds an extra amount of resource, defined by the
+ * {@link VerticalVmScaling#getScalingFactor() scaling factor}, for safety.
+ * This extra amount added is to enable the resource usage to grow up to the scaling factor
  * without needing to resize the resource again. If it grows up to the scaling factor,
  * a new up scaling request will be sent.
  * </p>
@@ -59,12 +60,12 @@ public class ResourceScalingInstantaneous implements ResourceScaling {
 
     @Override
     public double getResourceAmountToScale(final VerticalVmScaling vmScaling) {
-        final Function<Vm, Double> thresholdFunction = vmScaling.getResourceUsageThresholdFunction();
+        final Function<Vm, Double> thresholdFunc = vmScaling.getResourceUsageThresholdFunction();
         /* Computes the size to which the resource has to be scaled to move it from the
         * under or overload state.*/
         final Resource res = vmScaling.getResource();
         //The new total capacity to move the VM resource from under/overloaded.
-        final double newTotalCapacity = Math.ceil(res.getAllocatedResource() / thresholdFunction.apply(vmScaling.getVm()));
+        final double newTotalCapacity = Math.ceil(res.getAllocatedResource() / thresholdFunc.apply(vmScaling.getVm()));
         //The difference to add/remove from the current capacity so that the resource capacity will be equal to that just computed.
         final double scaleCapacity = newTotalCapacity - res.getCapacity();
 

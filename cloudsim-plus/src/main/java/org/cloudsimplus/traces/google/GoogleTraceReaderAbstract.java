@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -25,6 +25,7 @@ package org.cloudsimplus.traces.google;
 
 import org.cloudbus.cloudsim.core.Identifiable;
 import org.cloudbus.cloudsim.util.TraceReaderAbstract;
+import org.cloudsimplus.traces.ParsingException;
 import org.cloudsimplus.traces.TraceReaderBase;
 
 import java.io.InputStream;
@@ -57,7 +58,7 @@ abstract class GoogleTraceReaderAbstract<T extends Identifiable> extends TraceRe
     /* default */  GoogleTraceReaderAbstract(final String filePath, final InputStream reader) {
         super(filePath, reader);
         this.setFieldDelimiterRegex(",");
-        availableObjectsMap = new HashMap();
+        availableObjectsMap = new HashMap<>();
     }
 
     /**
@@ -75,7 +76,7 @@ abstract class GoogleTraceReaderAbstract<T extends Identifiable> extends TraceRe
             try {
                 readFile(this::processParsedLine);
             } catch (Exception e) {
-                throw new RuntimeException("Error when processing the trace file. Current trace line: " + getLastLineNumber(), e);
+                throw new ParsingException("Error when processing the trace file. Current trace line: " + getLastLineNumber(), e);
             }
 
             postProcess();
@@ -88,7 +89,7 @@ abstract class GoogleTraceReaderAbstract<T extends Identifiable> extends TraceRe
      * Executes any pre-process before starting to read the trace file,
      * such as checking if required attributes were set.
      *
-     * @TODO Such a method should be defined as a Functional attribute.
+     * TODO Such a method should be defined as a Functional attribute.
      *       Since it won't be implemented by every subclass, by it being abstract,
      *       forces to subclasses to implement it (even if just including an empty method).
      */
@@ -97,7 +98,7 @@ abstract class GoogleTraceReaderAbstract<T extends Identifiable> extends TraceRe
     /**
      * Executes any post-process after the trace file was totally parsed.
      *
-     * @TODO Such a method should be defined as a Functional attribute.
+     * TODO Such a method should be defined as a Functional attribute.
      *       Since it won't be implemented by every subclass, by it being abstract,
      *       forces to subclasses to implement it (even if just including an empty method).
      */

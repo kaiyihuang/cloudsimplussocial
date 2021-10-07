@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -21,18 +21,15 @@
  *     You should have received a copy of the GNU General Public License
  *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
  */
+package org.cloudsimplus.traces;
+
 /**
- * The package contains a set of experiments to compare the {@link org.cloudbus.cloudsim.schedulers.cloudlet.CloudletSchedulerTimeShared},
- * that has an oversimplified implementation of a time-shared scheduler, and the new CloudSim Plus
- * {@link org.cloudbus.cloudsim.schedulers.cloudlet.CloudletSchedulerCompletelyFair} class that provides
- * a basic implementation of the
- * <a href="https://en.wikipedia.org/wiki/Completely_Fair_Scheduler">Completely Fair Scheduler (CFS)</a> used by Linux Kernel.
- *
- * <p>The package provides two {@link org.cloudsimplus.testbeds.ExperimentRunner},
- * one for each of the experiments. Each runner has a main method
- * that allows to start a specific testbed. A testbed is a set of experiments executed
- * a given number of times defined by the runner class.</p>
- *
+ * An exception when parsing a trace file.
  * @author Manoel Campos da Silva Filho
+ * @since CloudSim Plus 7.0.4
  */
-package org.cloudsimplus.testbeds.linuxscheduler;
+public class ParsingException extends RuntimeException {
+    public ParsingException(final String msg, final Exception e){
+        super(msg, e);
+    }
+}

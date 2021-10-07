@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -23,16 +23,13 @@
  */
 package org.cloudsimplus.traces.google;
 
-import org.cloudbus.cloudsim.brokers.DatacenterBroker;
 import org.cloudbus.cloudsim.cloudlets.Cloudlet;
 import org.cloudbus.cloudsim.core.CloudSimTags;
 
-import static org.cloudsimplus.traces.google.GoogleTaskEventsTraceReader.FieldIndex;
-
 /**
- * Defines the type of an event (a line) in the trace file
+ * Defines the type of {@link TaskEvent} (a line) in the trace file
  * that represents the state of the job.
- * Each enum instance is a possible value for the {@link FieldIndex#EVENT_TYPE} field.
+ * Each enum instance is a possible value for the {@link TaskEventField#EVENT_TYPE} field.
  *
  * @author Manoel Campos da Silva Filho
  * @since CloudSim Plus 4.0.0
@@ -44,18 +41,16 @@ public enum TaskEventType {
     SUBMIT{
         @Override
         protected boolean process(final GoogleTaskEventsTraceReader reader) {
-            final TaskEvent event = reader.createTaskEventFromTraceLine();
-            final DatacenterBroker broker = reader.getOrCreateBroker(event.getUserName());
-
             if(!reader.allowCloudletCreation()) {
                 return false;
             }
 
-            final Cloudlet cloudlet = reader.createCloudlet(event);
+            final var event = TaskEvent.of(reader);
+            final var cloudlet = reader.createCloudlet(event);
             // Since Cloudlet id must be unique, it will be the concatenation of the job and task id
             cloudlet.setId(event.getUniqueTaskId());
             cloudlet.setJobId(event.getJobId());
-            final double delay = FieldIndex.TIMESTAMP.getValue(reader);
+            final double delay = TaskEventField.TIMESTAMP.getValue(reader);
             cloudlet.setSubmissionDelay(delay);
 
             /* Set status to FROZEN to avoid the cloudlet to start running after being submitted.
@@ -64,6 +59,7 @@ public enum TaskEventType {
                 cloudlet.setStatus(Cloudlet.Status.FROZEN);
             }
 
+            final var broker = reader.getBrokerManager().getOrCreateBroker(event.getUserName());
             if(reader.isAutoSubmitCloudlets()) {
                 broker.submitCloudlet(cloudlet);
             }
@@ -178,4 +174,13 @@ public enum TaskEventType {
      * @return true if trace line for the event type was processed, false otherwise
      */
     protected abstract boolean process(GoogleTaskEventsTraceReader reader);
+
+    /**
+     * Gets the enum value that represents the event type of the current trace line.
+     *
+     * @return the {@link MachineEventType} value
+     */
+    protected static TaskEventType of(final GoogleTaskEventsTraceReader reader) {
+        return getValue(TaskEventField.EVENT_TYPE.getValue(reader));
+    }
 }

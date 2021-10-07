@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -56,7 +56,7 @@ public abstract class TraceReaderBase extends TraceReaderAbstract {
      * @param field a enum value representing the index of the field to get the value
      * @return
      */
-    protected <T extends Enum> String getFieldValue(final T field){
+    public <T extends Enum> String getFieldValue(final T field){
         return lastParsedLineArray[field.ordinal()];
     }
 
@@ -66,7 +66,7 @@ public abstract class TraceReaderBase extends TraceReaderAbstract {
      * @param field a enum value representing the index of the field to get the value
      * @return
      */
-    protected <T extends Enum> double getFieldDoubleValue(final T field){
+    public <T extends Enum> double getFieldDoubleValue(final T field){
         return Double.parseDouble(getFieldValue(field));
     }
 
@@ -77,7 +77,7 @@ public abstract class TraceReaderBase extends TraceReaderAbstract {
      * @param defaultValue the default value to be returned if the field value is not a number
      * @return
      */
-    protected <T extends Enum> double getFieldDoubleValue(final T field, final double defaultValue){
+    public <T extends Enum> double getFieldDoubleValue(final T field, final double defaultValue){
         final String value = getFieldValue(field);
         return  value.matches("^-?\\d+(\\.?\\d+)?$") ? Double.parseDouble(value) : defaultValue;
     }
@@ -88,7 +88,7 @@ public abstract class TraceReaderBase extends TraceReaderAbstract {
      * @param field a enum value representing the index of the field to get the value
      * @return
      */
-    protected <T extends Enum> int getFieldIntValue(final T field){
+    public <T extends Enum> int getFieldIntValue(final T field){
         return Integer.parseInt(getFieldValue(field));
     }
 
@@ -99,7 +99,7 @@ public abstract class TraceReaderBase extends TraceReaderAbstract {
      * @param defaultValue the default value to be returned if the field value is not an int
      * @return
      */
-    protected <T extends Enum> int getFieldIntValue(final T field, final int defaultValue){
+    public <T extends Enum> int getFieldIntValue(final T field, final int defaultValue){
         final String value = getFieldValue(field);
         return  value.matches(INT_REGEX) ? Integer.parseInt(value) : defaultValue;
     }
@@ -110,7 +110,7 @@ public abstract class TraceReaderBase extends TraceReaderAbstract {
      * @param field a enum value representing the index of the field to get the value
      * @return
      */
-    protected <T extends Enum> long getFieldLongValue(final T field){
+    public <T extends Enum> long getFieldLongValue(final T field){
         return Long.parseLong(getFieldValue(field));
     }
 
@@ -121,7 +121,7 @@ public abstract class TraceReaderBase extends TraceReaderAbstract {
      * @param defaultValue the default value to be returned if the field value is not an int
      * @return
      */
-    protected <T extends Enum> long getFieldLongValue(final T field, final long defaultValue){
+    public <T extends Enum> long getFieldLongValue(final T field, final long defaultValue){
         final String value = getFieldValue(field);
         return  value.matches(INT_REGEX) ? Long.parseLong(value) : defaultValue;
     }

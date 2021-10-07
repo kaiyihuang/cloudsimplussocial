@@ -21,12 +21,13 @@ public class PowerModelDatacenterSimple extends PowerModelDatacenter {
      * @param datacenter the Datacenter for which the power model will be defined
      */
     public PowerModelDatacenterSimple(final Datacenter datacenter) {
+        super();
         setDatacenter(datacenter);
     }
 
     @Override
     public PowerMeasurement getPowerMeasurement() {
-        PowerMeasurement measurement = getDatacenter().getHostList().stream()
+        final PowerMeasurement measurement = getDatacenter().getHostList().stream()
             .map(Host::getPowerModel)
             .map(PowerModelHost::getPowerMeasurement)
             .reduce(PowerMeasurement::add)

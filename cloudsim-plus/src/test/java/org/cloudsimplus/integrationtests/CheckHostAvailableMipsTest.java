@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -72,7 +72,6 @@ public final class CheckHostAvailableMipsTest {
     private static final int    FIRST_VM_FINISH_TIME = 6;
     private static final int    LAST_VM_FINISH_TIME = 10;
 
-    private SimulationScenarioBuilder scenario;
     private UtilizationModel utilizationModel;
     private CloudSim simulation;
 
@@ -80,7 +79,7 @@ public final class CheckHostAvailableMipsTest {
     public void setUp() {
         this.simulation = new  CloudSim();
         utilizationModel = new UtilizationModelFull();
-        scenario = new SimulationScenarioBuilder(simulation);
+        final var scenario = new SimulationScenarioBuilder(simulation);
         final List<Host> hosts = new HostBuilder()
             .setOnUpdateVmsProcessingListener(this::onUpdateVmsProcessing)
             .setPes(HOST_PES).setMips(HOST_MIPS)

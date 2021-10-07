@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -38,7 +38,7 @@ class HeuristicNull<S extends HeuristicSolution<?>> implements Heuristic<S> {
     @Override public S createNeighbor(S source) { return (S)HeuristicSolution.NULL; }
     @Override public S solve() { return (S)HeuristicSolution.NULL; }
 	@Override public S getBestSolutionSoFar() { return (S)HeuristicSolution.NULL; }
-	@Override public int getNeighborhoodSearchesByIteration() { return 0; }
-	@Override public void setNeighborhoodSearchesByIteration(int neighborhoodSearches) {/**/}
+	@Override public int getSearchesByIteration() { return 0; }
+	@Override public void setSearchesByIteration(int neighborhoodSearches) {/**/}
 	@Override public double getSolveTime() { return 0; }
 }

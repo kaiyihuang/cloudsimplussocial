@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -125,7 +125,7 @@ public final class BytesConversion {
      * doesn't matter if the unit is Kilobytes (KB), Megabytes (MB), Gigabytes (GB), etc.
      *
      * @param bytes the value in bytes, KB, MB, GB, etc
-     * @return the value in bites, Kbits, Mbits, Gbits and so on, according to the given value
+     * @return the value in bites, kilo-bits, mega-bits, giga-bits and so on, according to the given value
      */
     public static double bytesToBits(final double bytes){
         return bytes * 8;

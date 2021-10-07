@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -46,7 +46,7 @@ public interface VmDatacenterEventInfo extends VmEventInfo, DatacenterEventInfo 
      * @param listener the listener to be notified about the event
      * @param vm the {@link Vm} that fired the event
      */
-    static VmDatacenterEventInfo of(final EventListener<? extends EventInfo> listener, final Vm vm) {
+    static VmDatacenterEventInfo of(final EventListener<VmDatacenterEventInfo> listener, final Vm vm) {
         return of(listener, vm, vm.getHost().getDatacenter());
     }
 
@@ -62,13 +62,13 @@ public interface VmDatacenterEventInfo extends VmEventInfo, DatacenterEventInfo 
      *                   depending on the fired event, such as the
      *                   {@link Vm#addOnCreationFailureListener(EventListener)}  OnVmCreationFailure}
      */
-    static VmDatacenterEventInfo of(final EventListener<? extends EventInfo> listener, final Vm vm, final Datacenter datacenter) {
+    static VmDatacenterEventInfo of(final EventListener<VmDatacenterEventInfo> listener, final Vm vm, final Datacenter datacenter) {
         final double time = vm.getSimulation().clock();
         return new VmDatacenterEventInfo() {
             @Override public Datacenter getDatacenter() { return datacenter; }
             @Override public Vm getVm() { return vm; }
             @Override public double getTime() { return time; }
-            @Override public EventListener<? extends EventInfo> getListener() { return listener; }
+            @Override public EventListener<VmDatacenterEventInfo> getListener() { return listener; }
         };
     }
 }

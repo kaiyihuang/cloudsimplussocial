@@ -15,18 +15,16 @@ import org.cloudbus.cloudsim.core.events.SimEvent;
 import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter;
 import org.cloudbus.cloudsim.hosts.network.NetworkHost;
 import org.cloudbus.cloudsim.network.HostPacket;
-import org.cloudbus.cloudsim.util.BytesConversion;
 import org.cloudbus.cloudsim.vms.Vm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.cloudbus.cloudsim.util.BytesConversion.bytesToMegaBits;
 
 /**
- * A base class for implementing Network Switch.
+ * An abstract class for implementing Network {@link Switch}es.
  *
  * @author Saurabh Kumar Garg
  * @author Manoel Campos da Silva Filho
@@ -62,29 +60,19 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      */
     private final List<Switch> downlinkSwitches;
 
-    /**
-     * @see #getUplinkBandwidth()
-     */
+    /** @see #getUplinkBandwidth() */
     private double uplinkBandwidth;
 
-    /**
-     * @see #getDownlinkBandwidth()
-     */
+    /** @see #getDownlinkBandwidth() */
     private double downlinkBandwidth;
 
-    /**
-     * @see #getPorts()
-     */
+    /** @see #getPorts() */
     private int ports;
 
-    /**
-     * @see #getDatacenter()
-     */
+    /** @see #getDatacenter() */
     private NetworkDatacenter datacenter;
 
-    /**
-     * @see #getSwitchingDelay()
-     */
+    /** @see #getSwitchingDelay() */
     private double switchingDelay;
 
     public AbstractSwitch(final CloudSim simulation, final NetworkDatacenter dc) {
@@ -94,50 +82,41 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
         this.downlinkSwitchPacketMap = new HashMap<>();
         this.downlinkSwitches = new ArrayList<>();
         this.uplinkSwitches = new ArrayList<>();
-        this.datacenter = dc;
+        this.datacenter = Objects.requireNonNull(dc);
     }
 
     @Override
     protected void startInternal() {
         LOGGER.info("{} is starting...", getName());
-        schedule(this, 0, CloudSimTags.DATACENTER_LIST_REQUEST);
+        schedule(CloudSimTags.DC_LIST_REQUEST);
     }
 
     @Override
     public void processEvent(final SimEvent evt) {
         switch (evt.getTag()) {
-            case CloudSimTags.NETWORK_EVENT_UP:
-                // process the packet from down switch or host
-                processPacketUp(evt);
-            break;
-            case CloudSimTags.NETWORK_EVENT_DOWN:
-                // process the packet from uplink
-                processPacketDown(evt);
-            break;
-            case CloudSimTags.NETWORK_EVENT_SEND:
-                processPacketForward();
-            break;
-            case CloudSimTags.NETWORK_EVENT_HOST:
-                processHostPacket(evt);
-            break;
+            case CloudSimTags.NETWORK_EVENT_UP -> processPacketUp(evt);
+            case CloudSimTags.NETWORK_EVENT_DOWN -> processPacketDown(evt);
+            case CloudSimTags.NETWORK_EVENT_SEND -> processPacketForward();
+            case CloudSimTags.NETWORK_EVENT_HOST -> processHostPacket(evt);
+            default -> LOGGER.trace("{}: {}: Unknown event {} received.", getSimulation().clockStr(), this, evt.getTag());
         }
     }
 
     /**
      * Process a packet sent to a host.
      *
-     * @param evt The packet sent.
+     * @param evt the packet sent
      */
     protected void processHostPacket(final SimEvent evt) {
-        final HostPacket pkt = (HostPacket) evt.getData();
+        final var pkt = (HostPacket) evt.getData();
         final NetworkHost host = pkt.getDestination();
         host.addReceivedNetworkPacket(pkt);
     }
 
     /**
-     * Sends a packet to Datacenter connected through a downlink port.
+     * Sends a packet from uplink to Datacenter connected through a downlink port.
      *
-     * @param evt Event/packet to process
+     * @param evt event/packet to process
      */
     protected void processPacketDown(final SimEvent evt) {
         // Packet coming from up level router has to send downward.
@@ -155,7 +134,7 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
     }
 
     /**
-     * Sends a packet to Datacenter connected through a uplink port.
+     * Sends a packet from down switch or host to Datacenter connected through an uplink port.
      *
      * @param evt Event/packet to process
      */
@@ -181,10 +160,24 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      * @see #downlinkSwitchPacketMap
      */
     private void forwardPacketsToDownlinkSwitches() {
-        for (final Switch destinationSwitch: downlinkSwitchPacketMap.keySet()) {
-            final List<HostPacket> packetList = getDownlinkSwitchPacketList(destinationSwitch);
-            final double bandwidth = this.downlinkBandwidth;
-            forwardPacketsToSwitch(destinationSwitch, packetList, bandwidth, CloudSimTags.NETWORK_EVENT_DOWN);
+        for (final var targetSwitch: downlinkSwitchPacketMap.keySet()) {
+            final var hostPktList = getDownlinkSwitchPacketList(targetSwitch);
+            final double bw = this.downlinkBandwidth;
+            forwardPacketsToSwitch(targetSwitch, hostPktList, bw, CloudSimTags.NETWORK_EVENT_DOWN);
+        }
+    }
+
+    /**
+     * Gets the list of packets to be sent to each Uplink Switch
+     * and forward them.
+     *
+     * @see #uplinkSwitchPacketMap
+     */
+    private void forwardPacketsToUplinkSwitches() {
+        for (final var targetSwitch : uplinkSwitchPacketMap.keySet()) {
+            final var hostPktList = getUplinkSwitchPacketList(targetSwitch);
+            final double bw = uplinkBandwidth;
+            forwardPacketsToSwitch(targetSwitch, hostPktList, bw, CloudSimTags.NETWORK_EVENT_UP);
         }
     }
 
@@ -201,20 +194,6 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
     }
 
     /**
-     * Gets the list of packets to be sent to each Uplink Switch
-     * and forward them.
-     *
-     * @see #uplinkSwitchPacketMap
-     */
-    private void forwardPacketsToUplinkSwitches() {
-        for (final Switch destinationSwitch : uplinkSwitchPacketMap.keySet()) {
-            final List<HostPacket> packetList = getUplinkSwitchPacketList(destinationSwitch);
-            final double bandwidth = uplinkBandwidth;
-            forwardPacketsToSwitch(destinationSwitch, packetList, bandwidth, CloudSimTags.NETWORK_EVENT_UP);
-        }
-    }
-
-    /**
      * Gets the list of packets to be sent to each Host
      * and forward them.
      *
@@ -222,8 +201,8 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      */
     private void forwardPacketsToHosts() {
         for (final NetworkHost host : packetToHostMap.keySet()) {
-            final List<HostPacket> packetList = getHostPacketList(host);
-            forwardPacketsToSwitch(this, packetList, downlinkBandwidth, CloudSimTags.NETWORK_EVENT_HOST);
+            final var hostPktList = getHostPacketList(host);
+            forwardPacketsToSwitch(this, hostPktList, downlinkBandwidth, CloudSimTags.NETWORK_EVENT_HOST);
         }
     }
 
@@ -238,7 +217,7 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
     }
 
     /**
-     * Computes the network delay to send a packet through the network,
+     * Computes the network delay for sending a packet through the network,
      * considering that a list of packets will be sent simultaneously.
      *
      * @param netPkt     the packet to be sent
@@ -249,14 +228,13 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
     protected double packetTransferDelay(
         final HostPacket netPkt, final double bwCapacity, final int simultaneousPackets)
     {
-        return BytesConversion.bytesToMegaBits(netPkt.getSize()) / bandwidthByPacket(bwCapacity, simultaneousPackets);
+        return bytesToMegaBits(netPkt.getSize()) / bandwidthByPacket(bwCapacity, simultaneousPackets);
     }
 
     /**
      * Considering a list of packets to be sent,
      * gets the amount of available bandwidth for each packet,
-     * assuming that the bandwidth is shared equally among
-     * all packets.
+     * assuming that the bandwidth is shared equally among all packets.
      *
      * @param bwCapacity the total bandwidth capacity to share among
      *                   the packets to be sent (in Megabits/s)
@@ -330,8 +308,7 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      * @return the list of packets to be sent to the given switch.
      */
     protected List<HostPacket> getDownlinkSwitchPacketList(final Switch downlinkSwitch) {
-        downlinkSwitchPacketMap.putIfAbsent(downlinkSwitch, new ArrayList<>());
-        return downlinkSwitchPacketMap.get(downlinkSwitch);
+        return downlinkSwitchPacketMap.getOrDefault(downlinkSwitch, new ArrayList<>());
     }
 
     /**
@@ -340,8 +317,7 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      * @return the list of packets to be sent to the given switch.
      */
     protected List<HostPacket> getUplinkSwitchPacketList(final Switch uplinkSwitch) {
-        uplinkSwitchPacketMap.putIfAbsent(uplinkSwitch, new ArrayList<>());
-        return uplinkSwitchPacketMap.get(uplinkSwitch);
+        return uplinkSwitchPacketMap.getOrDefault(uplinkSwitch, new ArrayList<>());
     }
 
     /**
@@ -350,8 +326,7 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      * @return the list of packets to be sent to the given host.
      */
     protected List<HostPacket> getHostPacketList(final NetworkHost host) {
-        packetToHostMap.putIfAbsent(host, new ArrayList<>());
-        return packetToHostMap.get(host);
+        return packetToHostMap.getOrDefault(host, new ArrayList<>());
     }
 
     /**
@@ -360,7 +335,12 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      * @param packet the packet to be sent
      */
     protected void addPacketToSendToDownlinkSwitch(final Switch downlinkSwitch, final HostPacket packet) {
-        getDownlinkSwitchPacketList(downlinkSwitch).add(packet);
+        computeMapValue(downlinkSwitchPacketMap, downlinkSwitch, packet);
+    }
+
+    protected void addPacketToBeSentToFirstUplinkSwitch(final HostPacket netPkt) {
+        final Switch uplinkSw = getUplinkSwitches().get(0);
+        addPacketToSendToUplinkSwitch(uplinkSw, netPkt);
     }
 
     /**
@@ -369,7 +349,7 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      * @param packet the packet to be sent
      */
     protected void addPacketToSendToUplinkSwitch(final Switch uplinkSwitch, final HostPacket packet) {
-        getUplinkSwitchPacketList(uplinkSwitch).add(packet);
+        computeMapValue(uplinkSwitchPacketMap, uplinkSwitch, packet);
     }
 
     /**
@@ -378,7 +358,19 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
      * @param packet the packet to be sent
      */
     protected void addPacketToSendToHost(final NetworkHost host, final HostPacket packet) {
-        getHostPacketList(host).add(packet);
+        computeMapValue(packetToHostMap, host, packet);
+    }
+
+    /**
+     * Computes a value for a multi-map, a map where values are a List.
+     * @param map the map to compute a value (to add a value to a List mapped to a key)
+     * @param key the key to access the mapped List
+     * @param valueToAdd the value to add to the List
+     * @param <K> type of the map key
+     * @param <V> type of the map value
+     */
+    private <K, V> void computeMapValue(final Map<K, List<V>> map, final K key, final V valueToAdd) {
+        map.compute(key, (k, list) -> list == null ? new ArrayList<>() : list).add(valueToAdd);
     }
 
     @Override
@@ -389,21 +381,6 @@ public abstract class AbstractSwitch extends CloudSimEntity implements Switch {
     @Override
     public void setDatacenter(final NetworkDatacenter datacenter) {
         this.datacenter = datacenter;
-    }
-
-    /**
-     * Gets the {@link EdgeSwitch} that the Host where the VM receiving a packet is connected to.
-     * @param pkt the packet targeting some VM
-     * @return the Edge Switch connected to the Host where the targeting VM is placed
-     */
-    protected EdgeSwitch getVmEdgeSwitch(final HostPacket pkt) {
-        final Vm receiverVm = pkt.getVmPacket().getDestination();
-        return ((NetworkHost)receiverVm.getHost()).getEdgeSwitch();
-    }
-
-    protected void addPacketToBeSentToFirstUplinkSwitch(HostPacket netPkt) {
-        final Switch uplinkSw = getUplinkSwitches().get(0);
-        addPacketToSendToUplinkSwitch(uplinkSw, netPkt);
     }
 
 }

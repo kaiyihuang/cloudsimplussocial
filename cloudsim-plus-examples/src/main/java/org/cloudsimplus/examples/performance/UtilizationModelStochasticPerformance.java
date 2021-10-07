@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -107,7 +107,7 @@ public class UtilizationModelStochasticPerformance {
     private static final boolean MULTIPLE_UTILIZATION_MODELS = false;
 
     /**
-     * See {@link UtilizationModelStochastic#isAlwaysGenerateNewRandomUtilization()}
+     * See {@link UtilizationModelStochastic#isAlwaysGenNewRandUtilization()}
      * for details.
      */
     private static final boolean ALWAYS_GENERATE_NEW_RANDOM_UTILIZATION = false;
@@ -221,7 +221,7 @@ public class UtilizationModelStochasticPerformance {
             this.um = MULTIPLE_UTILIZATION_MODELS || this.um == null ? new UtilizationModelStochastic(SEED) : this.um;
             this.um
                 .setHistoryEnabled(STORE_CLOUDLETS_CPU_UTILIZATION_HISTORY)
-                .setAlwaysGenerateNewRandomUtilization(ALWAYS_GENERATE_NEW_RANDOM_UTILIZATION);
+                .setAlwaysGenNewRandUtilization(ALWAYS_GENERATE_NEW_RANDOM_UTILIZATION);
             cloudlet.setUtilizationModelCpu(um).setSizes(1024);
             cloudlets.add(cloudlet);
         }

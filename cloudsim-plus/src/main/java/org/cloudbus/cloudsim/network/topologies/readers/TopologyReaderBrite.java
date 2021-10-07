@@ -8,10 +8,7 @@
 
 package org.cloudbus.cloudsim.network.topologies.readers;
 
-import org.cloudbus.cloudsim.network.topologies.Point2D;
 import org.cloudbus.cloudsim.network.topologies.TopologicalGraph;
-import org.cloudbus.cloudsim.network.topologies.TopologicalLink;
-import org.cloudbus.cloudsim.network.topologies.TopologicalNode;
 import org.cloudbus.cloudsim.util.ResourceLoader;
 
 import java.io.BufferedReader;
@@ -22,7 +19,7 @@ import java.util.StringTokenizer;
 import java.util.function.Function;
 
 /**
- * A network graph (topology) readers that creates a network topology from
+ * A network graph (topology) reader that creates a network topology from
  * a file in the <a href="http://www.cs.bu.edu/brite/user_manual/node29.html">BRITE format</a>.
  * A BRITE file is structured as follows:<br>
  * <ul>
@@ -35,15 +32,20 @@ import java.util.function.Function;
  * @since CloudSim Toolkit 1.0
  */
 public class TopologyReaderBrite implements TopologyReader {
-    private static final int PARSE_NOTHING = 0;
-    private static final int PARSE_NODES = 1;
-    private static final int PARSE_EDGES = 2;
-    private int state = PARSE_NOTHING;
+    private ParsingState state = ParsingState.NOTHING;
 
     /**
      * The network Topological Graph.
      */
     private TopologicalGraph graph;
+
+    TopologicalGraph getGraph() {
+        return graph;
+    }
+
+    void setState(final ParsingState state) {
+        this.state = state;
+    }
 
     @Override
     public TopologicalGraph readGraphFile(final String filename) {
@@ -51,82 +53,16 @@ public class TopologyReaderBrite implements TopologyReader {
     }
 
     @Override
-    public TopologicalGraph readGraphFile(final InputStreamReader sreader) {
+    public TopologicalGraph readGraphFile(final InputStreamReader reader) {
         graph = new TopologicalGraph();
-        try(BufferedReader reader = new BufferedReader(sreader)) {
-            String nextLine;
-            while ((nextLine = reader.readLine()) != null) {
-                // functionality to differentiate between all the parsing-states
-                // state that should just find the start of node-declaration
-                if (state == PARSE_NOTHING) {
-                    if (nextLine.contains("Nodes:")) {
-                        state = PARSE_NODES;
-                    }
-                }
-                // the state to retrieve all node-information
-                else if (state == PARSE_NODES) {
-                    // perform the parsing of this node-line
-                    parseNodeString(nextLine);
-                }
-                // the state to retrieve all edges-information
-                else if (state == PARSE_EDGES) {
-                    parseEdgesString(nextLine);
-                }
-            }
+        try(var buffer = new BufferedReader(reader)) {
+            buffer.lines().forEach(line -> state.parse(this, line));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
 
         return graph;
     }
-
-
-    /**
-     * Parses nodes inside a line from the BRITE file.
-     *
-     * @param nodeLine A line read from the file
-     */
-    private void parseNodeString(String nodeLine) {
-        // first test to step to the next parsing-state (edges)
-        if (nodeLine.contains("Edges:")) {
-            state = PARSE_EDGES;
-            return;
-        }
-
-        // List of fields in the line to parse
-        // NodeID, xpos, ypos, inDegree, outDegree, AS_id, type(router/AS)
-        final Integer[] parsedFields = {0, 0, 0};
-        if(!parseLine(nodeLine, parsedFields, Integer::valueOf)){
-            return;
-        }
-
-        final Point2D coordinates = new Point2D(parsedFields[1], parsedFields[2]);
-        final TopologicalNode topoNode = new TopologicalNode(parsedFields[0], coordinates);
-        graph.addNode(topoNode);
-    }
-
-    /**
-     * Parses edges inside a line from the BRITE file.
-     *
-     * @param nodeLine A line read from the file
-     */
-    private void parseEdgesString(String nodeLine) {
-
-        // List of fields in the line to parse
-        // EdgeID, fromNode, toNode, euclideanLength, linkDelay, linkBandwidth, AS_from, AS_to, type
-        final Double[] parsedFields = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-        if(!parseLine(nodeLine, parsedFields, Double::valueOf)){
-            return;
-        }
-
-        final int fromNode = parsedFields[1].intValue();
-        final int toNode = parsedFields[2].intValue();
-        final double linkDelay = parsedFields[4];
-        final double linkBandwidth = parsedFields[5];
-
-        graph.addLink(new TopologicalLink(fromNode, toNode, linkDelay, linkBandwidth));
-    }
-
 
     /**
      * Gets a line from a file and parses its fields, considering that all fields have the same type.
@@ -140,7 +76,9 @@ public class TopologyReaderBrite implements TopologyReader {
      * @param <T>          the type of the values of the output array
      * @return true if any field was parsed, false otherwise
      */
-    private <T extends Number> boolean parseLine(String nodeLine, T[] parsedFields, Function<String, T> castFunction){
+    <T extends Number> boolean parseLine(
+        final String nodeLine, final T[] parsedFields, final Function<String, T> castFunction)
+    {
         final StringTokenizer tokenizer = new StringTokenizer(nodeLine);
         if (!tokenizer.hasMoreElements()) {
             return false;

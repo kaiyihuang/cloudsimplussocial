@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -58,9 +58,9 @@ public class CloudletTaskCompletionTimeWorkLoadWithoutMinimizationRunner extends
     }
 
     @Override
-    protected CloudletTaskCompletionTimeWorkLoadWithoutMinimizationExperiment createExperimentInternal(int i) {
+    protected CloudletTaskCompletionTimeWorkLoadWithoutMinimizationExperiment createExperimentInternal(int index) {
         CloudletTaskCompletionTimeWorkLoadWithoutMinimizationExperiment exp
-                = new CloudletTaskCompletionTimeWorkLoadWithoutMinimizationExperiment(i, this);
+                = new CloudletTaskCompletionTimeWorkLoadWithoutMinimizationExperiment(index, this);
         exp.setAfterExperimentFinish(this::afterExperimentFinish).setVerbose(experimentVerbose);
         return exp;
     }
@@ -83,7 +83,7 @@ public class CloudletTaskCompletionTimeWorkLoadWithoutMinimizationRunner extends
         System.out.printf("Executing %d experiments. Please wait ... It may take a while.%n", getSimulationRuns());
         System.out.println("Experiments configurations:");
         System.out.printf("\tBase seed: %d | Number of VMs: %d | Number of Cloudlets: %d%n", getBaseSeed(), VMS, CLOUDLETS);
-        System.out.printf("\tApply Antithetic Variates Technique: %b%n", isApplyAntitheticVariatesTechnique());
+        System.out.printf("\tApply Antithetic Variates Technique: %b%n", isApplyAntitheticVariates());
         if (isApplyBatchMeansMethod()) {
             System.out.println("\tApply Batch Means Method to reduce simulation results correlation: true");
             System.out.printf("\tNumber of Batches for Batch Means Method: %d", getBatchesNumber());

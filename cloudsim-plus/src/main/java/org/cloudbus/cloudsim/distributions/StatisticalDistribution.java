@@ -1,3 +1,26 @@
+/*
+ * CloudSim Plus: A modern, highly-extensible and easier-to-use Framework for
+ * Modeling and Simulation of Cloud Computing Infrastructures and Services.
+ * http://cloudsimplus.org
+ *
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
+ *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
+ *
+ *     This file is part of CloudSim Plus.
+ *
+ *     CloudSim Plus is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CloudSim Plus is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cloudbus.cloudsim.distributions;
 
 import org.apache.commons.math3.distribution.RealDistribution;
@@ -22,7 +45,8 @@ public interface StatisticalDistribution {
      * instead.</p>
      *
      * @return the next pseudo random number in the sequence, following the
-     * implemented distribution, ignoring the {@link #isApplyAntitheticVariates() Antithetic Variates Technique}
+     * implemented distribution, ignoring the
+     * {@link #isApplyAntitheticVariates() Antithetic Variates Technique}
      * if enabled
      */
     double originalSample();
@@ -86,8 +110,8 @@ public interface StatisticalDistribution {
 
     /**
      * Indicates if the Pseudo-Random Number Generator (RNG) applies the
-     * <a href="https://en.wikipedia.org/wiki/Antithetic_variates">Antithetic Variates Technique</a> in order to reduce variance
-     * of experiments using the generated numbers.
+     * <a href="https://en.wikipedia.org/wiki/Antithetic_variates">Antithetic Variates Technique</a>
+     * in order to reduce variance of experiments using the generated numbers.
      *
      * This technique doesn't work for all the cases. However,
      * in the cases it can be applied, in order to it work, one have to
@@ -110,8 +134,8 @@ public interface StatisticalDistribution {
 
     /**
      * Indicates if the Pseudo-Random Number Generator (RNG) applies the
-     * <a href="https://en.wikipedia.org/wiki/Antithetic_variates">Antithetic Variates Technique</a> in order to reduce variance
-     * of experiments using the generated numbers.
+     * <a href="https://en.wikipedia.org/wiki/Antithetic_variates">Antithetic Variates Technique</a>
+     * in order to reduce variance of experiments using the generated numbers.
      *
      * @param applyAntitheticVariates true if the technique is to be applied, false otherwise
      * @see #isApplyAntitheticVariates()

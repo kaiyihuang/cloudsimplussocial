@@ -1,3 +1,26 @@
+/*
+ * CloudSim Plus: A modern, highly-extensible and easier-to-use Framework for
+ * Modeling and Simulation of Cloud Computing Infrastructures and Services.
+ * http://cloudsimplus.org
+ *
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
+ *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
+ *
+ *     This file is part of CloudSim Plus.
+ *
+ *     CloudSim Plus is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU General Public License as published by
+ *     the Free Software Foundation, either version 3 of the License, or
+ *     (at your option) any later version.
+ *
+ *     CloudSim Plus is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ *     You should have received a copy of the GNU General Public License
+ *     along with CloudSim Plus. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.cloudbus.cloudsim.cloudlets;
 
 import org.cloudbus.cloudsim.brokers.DatacenterBroker;
@@ -140,7 +163,7 @@ final class CloudletNull implements Cloudlet {
     @Override public boolean isFinished() {
         return false;
     }
-    @Override public boolean requiresFiles() {
+    @Override public boolean hasRequiresFiles() {
         return false;
     }
     @Override public Cloudlet setPriority(int priority) { return this; }
@@ -157,9 +180,7 @@ final class CloudletNull implements Cloudlet {
     @Override public boolean setStatus(Status newStatus) {
         return false;
     }
-    @Override public boolean setNetServiceLevel(int netServiceLevel) {
-        return false;
-    }
+    @Override public void setNetServiceLevel(int netServiceLevel) {/**/}
     @Override public Cloudlet setNumberOfPes(long numberOfPes) {
         return Cloudlet.NULL;
     }

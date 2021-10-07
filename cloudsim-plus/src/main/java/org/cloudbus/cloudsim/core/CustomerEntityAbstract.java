@@ -32,6 +32,7 @@ public abstract class CustomerEntityAbstract implements CustomerEntity {
 
     protected CustomerEntityAbstract(){
         lastTriedDatacenter = Datacenter.NULL;
+        creationTime = -1;
     }
 
     @Override
@@ -87,19 +88,12 @@ public abstract class CustomerEntityAbstract implements CustomerEntity {
 
     @Override
     public double getWaitTime() {
-        return creationTime - arrivedTime;
+        return creationTime < 0 ? getSimulation().clock() - arrivedTime : creationTime - arrivedTime;
     }
 
     @Override
     public Simulation getSimulation() {
         return broker.getSimulation();
-    }
-
-    @Override
-    public final int hashCode() {
-        int result = broker.hashCode();
-        result = 31 * result + Long.hashCode(id);
-        return result;
     }
 
     @Override
@@ -110,5 +104,20 @@ public abstract class CustomerEntityAbstract implements CustomerEntity {
     @Override
     public Datacenter getLastTriedDatacenter() {
         return lastTriedDatacenter;
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        final var that = (CustomerEntityAbstract) obj;
+        return this.getId() == that.getId() && this.getBroker().equals(that.getBroker());
+    }
+
+    @Override
+    public final int hashCode() {
+        int result = broker.hashCode();
+        result = 31 * result + Long.hashCode(id);
+        return result;
     }
 }

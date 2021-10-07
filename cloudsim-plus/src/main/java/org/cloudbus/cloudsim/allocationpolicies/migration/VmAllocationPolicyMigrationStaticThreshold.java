@@ -45,14 +45,13 @@ public class VmAllocationPolicyMigrationStaticThreshold extends VmAllocationPoli
     /**
      * Creates a VmAllocationPolicyMigrationStaticThreshold.
      * It uses a {@link #DEF_OVER_UTILIZATION_THRESHOLD default over utilization threshold}
-     * and a {@link #DEF_UNDER_UTILIZATION_THRESHOLD default under utilization threshold}.
+     * and a {@link #DEF_UNDERLOAD_THRESHOLD default under utilization threshold}.
      *
      * @param vmSelectionPolicy the policy that defines how VMs are selected for migration
      * @see #setUnderUtilizationThreshold(double)
      * @see #setOverUtilizationThreshold(double)
      */
-    public VmAllocationPolicyMigrationStaticThreshold(final VmSelectionPolicy vmSelectionPolicy)
-    {
+    public VmAllocationPolicyMigrationStaticThreshold(final VmSelectionPolicy vmSelectionPolicy) {
         this(vmSelectionPolicy, DEF_OVER_UTILIZATION_THRESHOLD, null);
     }
 

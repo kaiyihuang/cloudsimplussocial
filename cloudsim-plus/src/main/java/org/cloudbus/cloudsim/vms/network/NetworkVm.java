@@ -9,17 +9,20 @@ package org.cloudbus.cloudsim.vms.network;
 
 import org.cloudbus.cloudsim.brokers.DatacenterBroker;
 import org.cloudbus.cloudsim.cloudlets.network.NetworkCloudlet;
+import org.cloudbus.cloudsim.hosts.Host;
+import org.cloudbus.cloudsim.hosts.network.NetworkHost;
 import org.cloudbus.cloudsim.network.VmPacket;
 import org.cloudbus.cloudsim.resources.Pe;
+import org.cloudbus.cloudsim.vms.Vm;
 import org.cloudbus.cloudsim.vms.VmSimple;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * NetworkVm class extends {@link VmSimple} to support simulation of networked
- * datacenters. It executes actions related to management of packets (sent and
- * received).
+ * A Vm supporting simulation of network communication.
+ * It executes actions related to management of packets
+ * (sent and received).
  *
  * <p>Please refer to following publication for more details:
  * <ul>
@@ -38,6 +41,8 @@ import java.util.List;
  * @since CloudSim Toolkit 3.0
  */
 public class NetworkVm extends VmSimple {
+    public static final NetworkVm NULL = new NetworkVm();
+
     private List<NetworkCloudlet> cloudletList;
     private List<VmPacket> receivedPacketList;
     private boolean free;
@@ -59,6 +64,13 @@ public class NetworkVm extends VmSimple {
     }
 
     /**
+     * Creates an empty VM
+     */
+    private NetworkVm(){
+        this(-1, 0, 1);
+    }
+
+    /**
      * Creates a NetworkVm with 1024 MEGA of RAM, 1000 Megabits/s of Bandwidth and 1024 MEGA of Storage Size.
      * To change these values, use the respective setters. While the Vm {@link #isCreated()
      * is not created inside a Host}, such values can be changed freely.
@@ -73,7 +85,6 @@ public class NetworkVm extends VmSimple {
         super(mipsCapacity, numberOfPes);
         cloudletList = new ArrayList<>();
     }
-
 
     /** Indicates if the VM is free or not. */
     public boolean isFree() {
@@ -107,7 +118,7 @@ public class NetworkVm extends VmSimple {
     }
 
     /**
-     * The time when the VM finished to process its cloudlets.
+     * The time when the VM finishes processing its cloudlets.
      */
     public double getFinishTime() {
         return finishTime;
@@ -115,5 +126,21 @@ public class NetworkVm extends VmSimple {
 
     public void setFinishTime(final double finishTime) {
         this.finishTime = finishTime;
+    }
+
+    @Override
+    public NetworkHost getHost() {
+        return (NetworkHost)super.getHost();
+    }
+
+    @Override
+    public Vm setHost(final Host host) {
+        if(host == Host.NULL)
+            return super.setHost(NetworkHost.NULL);
+
+        if(host instanceof NetworkHost)
+            return super.setHost(host);
+
+        throw new IllegalArgumentException("NetworkVm can only be run into a NetworkHost");
     }
 }

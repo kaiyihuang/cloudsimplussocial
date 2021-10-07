@@ -3,7 +3,7 @@
  * Modeling and Simulation of Cloud Computing Infrastructures and Services.
  * http://cloudsimplus.org
  *
- *     Copyright (C) 2015-2018 Universidade da Beira Interior (UBI, Portugal) and
+ *     Copyright (C) 2015-2021 Universidade da Beira Interior (UBI, Portugal) and
  *     the Instituto Federal de Educação Ciência e Tecnologia do Tocantins (IFTO, Brazil).
  *
  *     This file is part of CloudSim Plus.
@@ -32,8 +32,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * A Vm <a href="https://en.wikipedia.org/wiki/Scalability#Horizontal_and_vertical_scaling">Horizontal Scaling</a> mechanism
- * used by a {@link DatacenterBroker} to dynamically create VMs according to the arrival of
+ * A Vm <a href="https://en.wikipedia.org/wiki/Scalability#Horizontal_and_vertical_scaling">Horizontal Scaling</a>
+ * mechanism used by a {@link DatacenterBroker} to dynamically create VMs according to the arrival of
  * Cloudlets, in order to enable load balancing.
  *
  * <p>Since Cloudlets can be created and submitted to a broker in runtime,
@@ -82,7 +82,8 @@ public interface HorizontalVmScaling extends VmScaling {
     HorizontalVmScaling setVmSupplier(Supplier<Vm> supplier);
 
     /**
-     * Requests a horizontal scale if the Vm is overloaded, according to the {@link #getOverloadPredicate()} predicate.
+     * Requests a horizontal scale if the Vm is overloaded, according to the
+     * {@link #getOverloadPredicate()} predicate.
      * The scaling is performed by creating a new Vm using the {@link #getVmSupplier()} method
      * and submitting it to the broker.
      *
