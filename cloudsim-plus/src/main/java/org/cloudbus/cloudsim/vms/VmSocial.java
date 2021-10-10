@@ -623,12 +623,13 @@ public class VmSocial extends CustomerEntityAbstract implements Vm {
     public Host latestHost;
 
     @Override
-    public final void setHost(final Host host) {
+    public final Vm setHost(final Host host) {
         if (Objects.requireNonNull(host) == Host.NULL) {
             setCreated(false);
         }
         this.host = host;
         if(host != Host.NULL) this.latestHost = host;
+        return this;
     }
 
     @Override

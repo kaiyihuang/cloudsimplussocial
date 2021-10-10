@@ -11,7 +11,6 @@ import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicy;
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyAbstract;
 import org.cloudbus.cloudsim.hosts.Host;
 import org.cloudbus.cloudsim.selectionpolicies.VmSelectionPolicy;
-import org.cloudbus.cloudsim.user.User;
 import org.cloudbus.cloudsim.vms.Vm;
 import org.cloudbus.cloudsim.vms.VmSimple;
 import org.cloudbus.cloudsim.vms.VmSocial;
@@ -99,20 +98,6 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
         setVmSelectionPolicy(vmSelectionPolicy);
     }
 
-    public List<Host> socialVmGetViableHosts(VmSocial vm)
-    {
-       HashMap<User, Integer> temp = vm.owner.adjacency_map;
-       List<Host> answer = this.getHostList();
-       for (Host h: answer){
-            if(!temp.containsKey(h))
-                continue;
-            if(temp.get(h) > vm.securityLevel)
-                answer.remove(h);
-       }
-       return answer;
-
-    }
-
     @Override
     public Map<Vm, Host> getOptimizedAllocationMap(final List<? extends Vm> vmList) {
         //@TODO See https://github.com/manoelcampos/cloudsim-plus/issues/94
@@ -184,8 +169,8 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
             if (!vmsToMigrateList.isEmpty()) {
                 logVmsToBeReallocated(underloadedHost, vmsToMigrateList);
                 final Map<Vm, Host> newVmPlacement = getNewVmPlacementFromUnderloadedHost(
-                        vmsToMigrateList,
-                        ignoredTargetHosts);
+                    vmsToMigrateList,
+                    ignoredTargetHosts);
 
                 ignoredSourceHosts.addAll(extractHostListFromMigrationMap(newVmPlacement));
                 migrationMap.putAll(newVmPlacement);
@@ -257,7 +242,7 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
      *         false otherwise
      */
     private boolean isNotHostOverloadedAfterAllocation(final Host host, final Vm vm) {
-        final Vm tempVm = new VmSocial(vm);
+        final var tempVm = new VmSocial(vm);
 
         if (!host.createTemporaryVm(tempVm).fully()) {
             return false;
@@ -353,21 +338,13 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
      * @see #findHostForVmInternal(Vm, Stream)
      */
     private Optional<Host> findHostForVm(final Vm vm, final Set<? extends Host> excludedHosts, final Predicate<Host> predicate) {
-        final Stream<Host> stream = this.getHostList().stream()
+        final var hostStream = this.getHostList().stream()
             .filter(host -> !excludedHosts.contains(host))
             .filter(host -> host.isSuitableForVm(vm))
             .filter(host -> isNotHostOverloadedAfterAllocation(host, vm))
             .filter(predicate);
 
-        /*
-        if (vm instanceof VmSocial)
-        {
-            if( ((VmSocial)vm).owner != null )
-                stream = stream.filter(host->this.socialVmGetViableHosts((VmSocial)vm).contains(host));
-        }*/
-
-
-        return findHostForVmInternal(vm, stream);
+        return findHostForVmInternal(vm, hostStream);
     }
 
     /**
@@ -433,8 +410,8 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
     private void appendVmMigrationMsgToStringBuilder(final StringBuilder builder, final Vm vm, final Host targetHost) {
         if(LOGGER.isInfoEnabled()) {
             builder.append("      ").append(vm).append(" will be migrated from ")
-              .append(vm.getHost()).append(" to ").append(targetHost)
-              .append(System.lineSeparator());
+                .append(vm.getHost()).append(" to ").append(targetHost)
+                .append(System.lineSeparator());
         }
     }
 
@@ -657,6 +634,7 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
     private void restoreAllocation() {
         for (final Host host : getHostList()) {
             host.destroyAllVms();
+            //System.out.println(host.getFreePeList());
             host.reallocateMigratingInVms();
         }
 
@@ -664,7 +642,8 @@ public abstract class VmAllocationPolicyMigrationAbstract extends VmAllocationPo
             final Host host = savedAllocation.get(vm);
             if (host.createTemporaryVm(vm).fully())
                 vm.setCreated(true);
-            else LOGGER.error("VmAllocationPolicy: Couldn't restore {} on {}", vm, host);
+            else
+                LOGGER.error("VmAllocationPolicy: Couldn't restore {} on {}", vm, host);
         }
     }
 

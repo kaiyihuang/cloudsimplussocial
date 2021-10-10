@@ -928,7 +928,7 @@ public class DatacenterSocial extends CloudSimEntity implements Datacenter {
     @Override
     protected void startInternal() {
         LOGGER.info("{}: {} is starting...", getSimulation().clockStr(), getName());
-        sendNow(getSimulation().getCloudInfoService(), CloudSimTags.DATACENTER_REGISTRATION_REQUEST, this);
+        sendNow(getSimulation().getCloudInfoService(), CloudSimTags.DC_REGISTRATION_REQUEST, this);
     }
 
     @Override

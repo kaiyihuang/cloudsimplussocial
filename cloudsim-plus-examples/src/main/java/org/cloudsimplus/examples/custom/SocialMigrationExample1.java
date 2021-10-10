@@ -25,6 +25,7 @@ package org.cloudsimplus.examples.custom;
 
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicy;
 import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyFirstFit;
+import org.cloudbus.cloudsim.allocationpolicies.VmAllocationPolicyRoundRobin;
 import org.cloudbus.cloudsim.allocationpolicies.migration.*;
 import org.cloudbus.cloudsim.brokers.DatacenterBroker;
 import org.cloudbus.cloudsim.brokers.DatacenterBrokerBestFitSocial;
@@ -246,14 +247,12 @@ public final class SocialMigrationExample1 {
         VmAllocationPolicyMigration allocationPolicyNew
             = new VmAllocationPolicyMigrationWorstFitStaticThresholdSocial(
             new VmSelectionPolicyMinimumUtilization(),
-            0.8);
+            0.7);
 
         allocationPolicyNew.setUnderUtilizationThreshold(this.contract.getCpuUtilizationMetric().getMinDimension().getValue());
 
         if(info.getTime() >= 10){
-            //((DatacenterSocial)datacenter0).setVmAllocationPolicy(allocationPolicyNew);
-            VmAllocationPolicy policy = ((DatacenterSocial)datacenter0).vmAllocationPolicy;
-            ((VmAllocationPolicyMigrationWorstFitStaticThresholdSocial)policy).setOverUtilizationThreshold(0.8);
+            ((DatacenterSocial)datacenter0).setVmAllocationPolicy(allocationPolicyNew);
         }
     }
 
@@ -266,15 +265,7 @@ public final class SocialMigrationExample1 {
      * @param host
      */
     private void printHostHistory(Host host) {
-        final boolean cpuUtilizationNotZero =
-            host.getStateHistory()
-                .stream()
-                .map(HostStateHistoryEntry::getPercentUsage)
-                .anyMatch(cpuUtilization -> cpuUtilization > 0);
-
-        if(cpuUtilizationNotZero) {
-            new HostHistoryTableBuilder(host).setTitle(host.toString()).build();
-        } else System.out.printf("\t%s CPU was zero all the time%n", host);
+        new HostHistoryTableBuilder(host).setTitle(host.toString()).build();
     }
 
     /**
@@ -320,6 +311,7 @@ public final class SocialMigrationExample1 {
             hostList.add(temp);
         }
         System.out.println();
+
 
         VmAllocationPolicyMigration allocationPolicy
             = new VmAllocationPolicyMigrationWorstFitStaticThresholdSocial(
