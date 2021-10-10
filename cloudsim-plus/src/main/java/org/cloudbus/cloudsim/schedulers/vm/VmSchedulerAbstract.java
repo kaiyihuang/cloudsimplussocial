@@ -230,7 +230,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
         final var vmStream = Stream.concat(host.getVmList().stream(), host.getVmsMigratingIn().stream());
         final double allocatedMips =
                 vmStream
-                    .map(vm -> (VmSimple)vm)
+                    .map(vm -> (VmSocial)vm)
                     .mapToDouble(this::actualVmTotalRequestedMips)
                     .sum();
 

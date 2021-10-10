@@ -623,12 +623,12 @@ public class VmSocial extends CustomerEntityAbstract implements Vm {
     public Host latestHost;
 
     @Override
-    public final Vm setHost(final Host host) {
-        if (Objects.requireNonNull(host) == Host.NULL) {
+    public Vm setHost(final Host host) {
+        if (Host.NULL.equals(requireNonNull(host)))  {
             setCreated(false);
         }
+
         this.host = host;
-        if(host != Host.NULL) this.latestHost = host;
         return this;
     }
 
@@ -671,8 +671,8 @@ public class VmSocial extends CustomerEntityAbstract implements Vm {
     public void updateMigrationStartListeners(final Host targetHost){
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onMigrationStartListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onMigrationStartListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this, targetHost));
+            final var listener = onMigrationStartListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this, targetHost));
         }
     }
 
@@ -683,8 +683,8 @@ public class VmSocial extends CustomerEntityAbstract implements Vm {
     public void updateMigrationFinishListeners(final Host targetHost){
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onMigrationFinishListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onMigrationFinishListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this, targetHost));
+            final var listener = onMigrationFinishListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this, targetHost));
         }
     }
 
@@ -821,7 +821,8 @@ public class VmSocial extends CustomerEntityAbstract implements Vm {
     @Override
     public String toString() {
         final String desc = StringUtils.isBlank(description) ? "" : String.format(" (%s)", description);
-        return String.format("%s %s", getId(), desc);
+        final String type = false ? "VmGroup" : "Vm";
+        return String.format("%s %d%s", type, getId(), desc);
     }
 
     /**
@@ -839,14 +840,6 @@ public class VmSocial extends CustomerEntityAbstract implements Vm {
         return Double.compare(getTotalMipsCapacity(), o.getTotalMipsCapacity()) +
                Long.compare(this.getId(), o.getId()) +
                this.getBroker().compareTo(o.getBroker());
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        final VmSocial vmSimple = (VmSocial) o;
-        return vmSimple.getId() == getId() && getBroker().equals(vmSimple.getBroker());
     }
 
     @Override
@@ -897,39 +890,36 @@ public class VmSocial extends CustomerEntityAbstract implements Vm {
     public void notifyOnHostAllocationListeners() {
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onHostAllocationListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onHostAllocationListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this));
+            final var listener = onHostAllocationListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this));
         }
     }
-
     @Override
     public void notifyOnHostDeallocationListeners(final Host deallocatedHost) {
         requireNonNull(deallocatedHost);
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onHostDeallocationListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onHostDeallocationListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this, deallocatedHost));
+            final var listener = onHostDeallocationListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this, deallocatedHost));
         }
     }
-
     /**
      * Notifies all registered listeners when the processing of the Vm is updated in its {@link Host}.
      */
     public void notifyOnUpdateProcessingListeners() {
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onUpdateProcessingListeners.size(); i++) {
-            final EventListener<VmHostEventInfo> l = onUpdateProcessingListeners.get(i);
-            l.update(VmHostEventInfo.of(l, this));
+            final var listener = onUpdateProcessingListeners.get(i);
+            listener.update(VmHostEventInfo.of(listener, this));
         }
     }
-
     @Override
     public void notifyOnCreationFailureListeners(final Datacenter failedDatacenter) {
         requireNonNull(failedDatacenter);
         //Uses indexed for to avoid ConcurrentModificationException
         for (int i = 0; i < onCreationFailureListeners.size(); i++) {
-            final EventListener<VmDatacenterEventInfo> l = onCreationFailureListeners.get(i);
-            l.update(VmDatacenterEventInfo.of(l, this, failedDatacenter));
+            final var listener = onCreationFailureListeners.get(i);
+            listener.update(VmDatacenterEventInfo.of(listener, this, failedDatacenter));
         }
     }
 
