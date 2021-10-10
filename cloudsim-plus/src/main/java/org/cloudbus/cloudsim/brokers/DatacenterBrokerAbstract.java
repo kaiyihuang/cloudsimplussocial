@@ -43,12 +43,6 @@ import static java.util.Objects.requireNonNull;
  */
 public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements DatacenterBroker {
     /**
-     * A message tag used for the broker to send a message to itself requesting the shutdown.
-     * That ensures a graceful shutdown, after other broker events are processed.
-     */
-    public static final int SHUTDOWN_TAG = -2;
-
-    /**
      * A default {@link Function} which always returns {@link #DEF_VM_DESTRUCTION_DELAY}
      * to indicate that any VM should not be immediately destroyed after it becomes idle.
      * This way, using this Function the broker will destroy VMs only after:
@@ -467,17 +461,17 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
 
     private boolean processCloudletEvents(final SimEvent evt) {
         return switch (evt.getTag()) {
-            case CloudSimTags.CLOUDLET_RETURN -> processCloudletReturn(evt);
-            case CloudSimTags.CLOUDLET_READY -> processCloudletReady(evt);
+            case CLOUDLET_RETURN -> processCloudletReturn(evt);
+            case CLOUDLET_READY -> processCloudletReady(evt);
             /* The data of such a kind of event is a Runnable that has all
              * the logic to update Cloudlet's attributes.
              * This way, it will be run to perform such an update.
              * Check the documentation of the tag below for details.*/
-            case CloudSimTags.CLOUDLET_UPDATE_ATTRIBUTES -> executeRunnableEvent(evt);
-            case CloudSimTags.CLOUDLET_PAUSE -> processCloudletPause(evt);
-            case CloudSimTags.CLOUDLET_CANCEL -> processCloudletCancel(evt);
-            case CloudSimTags.CLOUDLET_FINISH -> processCloudletFinish(evt);
-            case CloudSimTags.CLOUDLET_FAIL -> processCloudletFail(evt);
+            case CLOUDLET_UPDATE_ATTRIBUTES -> executeRunnableEvent(evt);
+            case CLOUDLET_PAUSE -> processCloudletPause(evt);
+            case CLOUDLET_CANCEL -> processCloudletCancel(evt);
+            case CLOUDLET_FINISH -> processCloudletFinish(evt);
+            case CLOUDLET_FAIL -> processCloudletFail(evt);
             default -> false;
         };
     }
@@ -493,23 +487,23 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
 
     private boolean processVmEvents(final SimEvent evt) {
         return switch (evt.getTag()) {
-            case CloudSimTags.VM_CREATE_RETRY -> {
+            case VM_CREATE_RETRY -> {
                 vmCreationRetrySent = false;
                 yield requestDatacenterToCreateWaitingVms(false, true);
             }
-            case CloudSimTags.VM_CREATE_ACK -> processVmCreateResponseFromDatacenter(evt);
-            case CloudSimTags.VM_VERTICAL_SCALING -> requestVmVerticalScaling(evt);
+            case VM_CREATE_ACK -> processVmCreateResponseFromDatacenter(evt);
+            case VM_VERTICAL_SCALING -> requestVmVerticalScaling(evt);
             default -> false;
         };
     }
 
     private boolean processGeneralEvents(final SimEvent evt) {
-        if (evt.getTag() == CloudSimTags.DC_LIST_REQUEST) {
+        if (evt.getTag() == CloudSimTag.DC_LIST_REQUEST) {
             processDatacenterListRequest(evt);
             return true;
         }
 
-        if (evt.getTag() == SHUTDOWN_TAG || evt.getTag() == CloudSimTags.END_OF_SIMULATION) {
+        if (evt.getTag() == CloudSimTag.ENTITY_SHUTDOWN || evt.getTag() == CloudSimTag.SIMULATION_END) {
             shutdown();
             return true;
         }
@@ -588,7 +582,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
         if(prevLength < 0){
             final double delay = cloudlet.getSimulation().getMinTimeBetweenEvents();
             final Datacenter dc = cloudlet.getVm().getHost().getDatacenter();
-            dc.schedule(delay, CloudSimTags.VM_UPDATE_CLOUDLET_PROCESSING);
+            dc.schedule(delay, CloudSimTag.VM_UPDATE_CLOUDLET_PROCESSING);
         }
 
         return true;
@@ -617,7 +611,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
         if (evt.getData() instanceof VerticalVmScaling scaling) {
             getSimulation().sendNow(
                 evt.getSource(), scaling.getVm().getHost().getDatacenter(),
-                CloudSimTags.VM_VERTICAL_SCALING, scaling);
+                CloudSimTag.VM_VERTICAL_SCALING, scaling);
             return true;
         }
 
@@ -653,8 +647,8 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
 
         //if the VM was successfully created in the requested Datacenter
         if (vm.isCreated()) {
-            notifyOnVmsCreatedListeners();
             processSuccessVmCreationInDatacenter(vm);
+            notifyOnVmsCreatedListeners();
             vm.notifyOnHostAllocationListeners();
         } else {
             vm.setFailed(true);
@@ -724,7 +718,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
         if (isRetryFailedVms()) {
             lastSelectedDc = datacenterList.get(0);
             this.vmCreationRetrySent = true;
-            schedule(failedVmsRetryDelay, CloudSimTags.VM_CREATE_RETRY);
+            schedule(failedVmsRetryDelay, CloudSimTag.VM_CREATE_RETRY);
         } else shutdown();
     }
 
@@ -842,14 +836,14 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
         if (vm.isCreated()) {
             if(isVmIdleEnough(vm) || isFinished()) {
                 LOGGER.info("{}: {}: Requesting {} destruction.", getSimulation().clockStr(), getName(), vm);
-                sendNow(getDatacenter(vm), CloudSimTags.VM_DESTROY, vm);
+                sendNow(getDatacenter(vm), CloudSimTag.VM_DESTROY, vm);
             }
 
             if(isVmIdlenessVerificationRequired((VmSocial)vm)) {
                 getSimulation().send(
                     new CloudSimEvent(vmDestructionDelayFunction.apply(vm),
                         vm.getHost().getDatacenter(),
-                        CloudSimTags.VM_UPDATE_CLOUDLET_PROCESSING));
+                        CloudSimTag.VM_UPDATE_CLOUDLET_PROCESSING));
                 return this;
             }
         }
@@ -866,7 +860,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
     @Override
     public void requestShutdownWhenIdle() {
         if (!shutdownRequested && isTimeToShutdownBroker()) {
-            schedule(SHUTDOWN_TAG);
+            schedule(CloudSimTag.ENTITY_SHUTDOWN);
             shutdownRequested = true;
         }
     }
@@ -955,7 +949,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
         }
 
         logVmCreationRequest(datacenter, isFallbackDatacenter, vm);
-        send(datacenter, vm.getSubmissionDelay(), CloudSimTags.VM_CREATE_ACK, vm);
+        send(datacenter, vm.getSubmissionDelay(), CloudSimTag.VM_CREATE_ACK, vm);
         vm.setLastTriedDatacenter(datacenter);
         return 1;
     }
@@ -1009,7 +1003,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
             logCloudletCreationRequest(cloudlet);
             cloudlet.setVm(lastSelectedVm);
             final Datacenter dc = getDatacenter(lastSelectedVm);
-            send(dc, cloudlet.getSubmissionDelay(), CloudSimTags.CLOUDLET_SUBMIT, cloudlet);
+            send(dc, cloudlet.getSubmissionDelay(), CloudSimTag.CLOUDLET_SUBMIT, cloudlet);
             cloudlet.setLastTriedDatacenter(dc);
             cloudletsCreatedList.add(cloudlet);
             iterator.remove();
@@ -1080,7 +1074,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
     @Override
     public void startInternal() {
         LOGGER.info("{} is starting...", getName());
-        schedule(getSimulation().getCloudInfoService(), 0, CloudSimTags.DC_LIST_REQUEST);
+        schedule(getSimulation().getCloudInfoService(), 0, CloudSimTag.DC_LIST_REQUEST);
     }
 
     @Override
@@ -1233,7 +1227,7 @@ public abstract class DatacenterBrokerAbstract extends CloudSimEntity implements
 
     @Override
     public DatacenterBroker setVmDestructionDelay(final double delay) {
-        if(delay <= getSimulation().getMinTimeBetweenEvents()){
+        if(delay <= getSimulation().getMinTimeBetweenEvents() && delay != DEF_VM_DESTRUCTION_DELAY){
             final var msg = "The delay should be larger then the simulation minTimeBetweenEvents to ensure VMs are gracefully shutdown.";
             throw new IllegalArgumentException(msg);
         }

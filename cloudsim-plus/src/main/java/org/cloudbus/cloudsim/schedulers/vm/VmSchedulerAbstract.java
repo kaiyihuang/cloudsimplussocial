@@ -30,12 +30,6 @@ import static java.util.stream.Collectors.toList;
  * @since CloudSim Toolkit 1.0
  */
 public abstract class VmSchedulerAbstract implements VmScheduler {
-    /**
-     * The default percentage to define the CPU overhead of VM migration
-     * if one is not explicitly set.
-     * @see #getVmMigrationCpuOverhead()
-     */
-    public static final double DEF_VM_MIGRATION_CPU_OVERHEAD = 0.1;
 
     /**
      * @see #getHost()
@@ -71,12 +65,12 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
         if(requestedMips.isEmpty()){
             LOGGER.warn(
                 "{}: {}: It was requested an empty list of PEs for {} in {}",
-                getHost().getSimulation().clockStr(), getClass().getSimpleName(), vm, host);
+                host.getSimulation().clockStr(), getClass().getSimpleName(), vm, host);
             return false;
         }
 
 
-        if(getHost().isFailed()){
+        if(host.isFailed()){
             return false;
         }
 
@@ -87,7 +81,7 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
 
     @Override
     public final boolean allocatePesForVm(final Vm vm) {
-        return allocatePesForVm(vm, new MipsShare(vm.getNumberOfPes(), vm.getMips()));
+        return allocatePesForVm(vm, new MipsShare(vm.getProcessor()));
     }
 
     @Override
@@ -233,11 +227,10 @@ public abstract class VmSchedulerAbstract implements VmScheduler {
 
     @Override
     public double getTotalAvailableMips() {
-        final Stream<Vm> stream =
-            Stream.concat(host.getVmList().stream(), host.getVmsMigratingIn().stream());
+        final var vmStream = Stream.concat(host.getVmList().stream(), host.getVmsMigratingIn().stream());
         final double allocatedMips =
-                stream
-                    .map(vm -> (VmSocial)vm)
+                vmStream
+                    .map(vm -> (VmSimple)vm)
                     .mapToDouble(this::actualVmTotalRequestedMips)
                     .sum();
 

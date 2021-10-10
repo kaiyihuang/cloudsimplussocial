@@ -446,6 +446,9 @@ public class HostSimple implements Host {
             return suitability;
         }
 
+        if(inMigration) {
+            vmsMigratingIn.add(vm);
+        }
         vm.setInMigration(inMigration);
         allocateResourcesForVm(vm);
 
@@ -570,7 +573,7 @@ public class HostSimple implements Host {
            return this;
         }
 
-        final int tag = activate ? CloudSimTags.HOST_POWER_ON : CloudSimTags.HOST_POWER_OFF;
+        final CloudSimTag tag = activate ? CloudSimTag.HOST_POWER_ON : CloudSimTag.HOST_POWER_OFF;
         final String msg = (activate ? "on" : "off") + " (expected time: {} seconds).";
         LOGGER.info("{}: {} is being powered " + msg, getSimulation().clockStr(), this, delay);
         datacenter.schedule(delay, tag, this);
@@ -1070,9 +1073,7 @@ public class HostSimple implements Host {
             return false;
         }
 
-        vmsMigratingIn.add(vm);
         if(!allocateResourcesForVm(vm, true).fully()){
-            vmsMigratingIn.remove(vm);
             return false;
         }
 

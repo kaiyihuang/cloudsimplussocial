@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 /**
  * An interface that represents the policy used by a
  * Virtual Machine Monitor (VMM) to share processing power of a PM among VMs
- * running in a host.  Each host has to use is own instance of a
+ * running in a host.  Each host has to use its own instance of a
  * VmScheduler that will so schedule the allocation of host's PEs for
  * VMs running on it.
  *
@@ -33,6 +33,13 @@ import org.slf4j.LoggerFactory;
  */
 public interface VmScheduler {
     Logger LOGGER = LoggerFactory.getLogger(VmScheduler.class.getSimpleName());
+
+    /**
+     * The default percentage to define the CPU overhead of VM migration
+     * if one is not explicitly set.
+     * @see #getVmMigrationCpuOverhead()
+     */
+    double DEF_VM_MIGRATION_CPU_OVERHEAD = 0.1;
 
     /**
      * An attribute that implements the Null Object Design Pattern for {@link VmScheduler}
